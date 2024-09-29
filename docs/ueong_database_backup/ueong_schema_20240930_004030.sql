@@ -118,7 +118,7 @@ CREATE TABLE `chats` (
   KEY `fk_chats_post1_idx` (`post_id`),
   CONSTRAINT `fk_chats_messages1` FOREIGN KEY (`last_message_id`) REFERENCES `messages` (`message_id`),
   CONSTRAINT `fk_chats_users1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `fk_chats_users2` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`user_id`)
+  CONSTRAINT `fk_chats_users2` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`user_id`),
   CONSTRAINT `fk_chats_post1` FOREIGN KEY (`post_id`) REFERENCES `post` (`post_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
