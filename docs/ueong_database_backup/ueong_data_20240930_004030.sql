@@ -21,7 +21,7 @@
 
 LOCK TABLES `address_emd` WRITE;
 /*!40000 ALTER TABLE `address_emd` DISABLE KEYS */;
-INSERT INTO `address_emd` VALUES (1,'가회동',1),(2,'신사동',2),(3,'중동',3),(4,'광안동',4),(5,'용현동',5);
+INSERT INTO `address_emd` VALUES (1,'가회동',1,37.58008,126.9848),(2,'신사동',2,37.52401,127.0228),(3,'중동',3,37.57173,126.9055),(4,'광안동',4,35.16289,129.1124),(5,'용현동',5,37.45085,126.6471);
 /*!40000 ALTER TABLE `address_emd` ENABLE KEYS */;
 UNLOCK TABLES;
 

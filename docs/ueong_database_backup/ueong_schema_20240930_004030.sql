@@ -26,6 +26,8 @@ CREATE TABLE `address_emd` (
   `emd_id` int NOT NULL,
   `emd_name` varchar(45) NOT NULL,
   `sgg_id` int NOT NULL,
+  `emd_latitude` double NOT NULL,
+  `emd_longitude` double NOT NULL,
   PRIMARY KEY (`emd_id`),
   KEY `fk_address_emd_address_sgg_idx` (`sgg_id`),
   CONSTRAINT `fk_address_emd_address_sgg` FOREIGN KEY (`sgg_id`) REFERENCES `address_sgg` (`sgg_id`)
