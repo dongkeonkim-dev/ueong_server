@@ -107,10 +107,10 @@ DROP TABLE IF EXISTS `chats`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `chats` (
   `chat_id` int NOT NULL AUTO_INCREMENT,
-  `post_id` int NOT NULL
   `seller_id` int NOT NULL,
   `buyer_id` int NOT NULL,
   `last_message_id` int NOT NULL,
+  `post_id` int NOT NULL,
   PRIMARY KEY (`chat_id`),
   KEY `fk_chats_users1_idx` (`seller_id`),
   KEY `fk_chats_users2_idx` (`buyer_id`),
