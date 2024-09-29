@@ -107,16 +107,19 @@ DROP TABLE IF EXISTS `chats`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `chats` (
   `chat_id` int NOT NULL AUTO_INCREMENT,
-  `user_id1` int NOT NULL,
-  `user_id2` int NOT NULL,
+  `post_id` int NOT NULL
+  `seller_id` int NOT NULL,
+  `buyer_id` int NOT NULL,
   `last_message_id` int NOT NULL,
   PRIMARY KEY (`chat_id`),
-  KEY `fk_chats_users1_idx` (`user_id1`),
-  KEY `fk_chats_users2_idx` (`user_id2`),
+  KEY `fk_chats_users1_idx` (`seller_id`),
+  KEY `fk_chats_users2_idx` (`buyer_id`),
   KEY `fk_chats_messages1_idx` (`last_message_id`),
+  KEY `fk_chats_post1_idx` (`post_id`),
   CONSTRAINT `fk_chats_messages1` FOREIGN KEY (`last_message_id`) REFERENCES `messages` (`message_id`),
-  CONSTRAINT `fk_chats_users1` FOREIGN KEY (`user_id1`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `fk_chats_users2` FOREIGN KEY (`user_id2`) REFERENCES `users` (`user_id`)
+  CONSTRAINT `fk_chats_users1` FOREIGN KEY (`seller_id`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `fk_chats_users2` FOREIGN KEY (`buyer_id`) REFERENCES `users` (`user_id`)
+  CONSTRAINT `fk_chats_post1` FOREIGN KEY (`post_id`) REFERENCES `users` (`post_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
