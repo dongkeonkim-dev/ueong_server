@@ -154,11 +154,14 @@ CREATE TABLE `messages` (
   `receiver_id` int NOT NULL,
   `message_text` varchar(255) NOT NULL,
   `sent_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `chat_id` int NOT NULL,
   PRIMARY KEY (`message_id`),
   KEY `fk_messages_users1_idx` (`sender_id`),
   KEY `fk_messages_users2_idx` (`receiver_id`),
+  KEY `fk_messages_chats1_idx` (`chat_id`),
   CONSTRAINT `fk_messages_users1` FOREIGN KEY (`sender_id`) REFERENCES `users` (`user_id`),
-  CONSTRAINT `fk_messages_users2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`user_id`)
+  CONSTRAINT `fk_messages_users2` FOREIGN KEY (`receiver_id`) REFERENCES `users` (`user_id`),
+  CONSTRAINT `fk_messages_chats1` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`chat_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
