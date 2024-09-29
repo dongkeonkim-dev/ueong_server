@@ -339,7 +339,10 @@ CREATE TABLE `users` (
   `authority` enum('일반회원','관리자') NOT NULL,
   `is_active` tinyint NOT NULL,
   `username` varchar(32) NOT NULL,
+  `profile_photo_id` int DEFAULT NULL,
   PRIMARY KEY (`user_id`)
+  KEY `fk_user_photo1_idx` (`profile_photo_id`),
+  CONSTRAINT `fk_user_photo1` FOREIGN KEY (`profile_photo_id`) REFERENCES `photo` (`photo_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

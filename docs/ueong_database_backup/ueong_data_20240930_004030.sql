@@ -180,7 +180,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'유저1','user1@example.com','$2b$10$LLwnpFwdcPe06vsOCUUz2uz2jVLrmBEJglfwc.Ma88yLRmOxFZhxW','일반회원',1,'username1'),(2,'유저2','user2@example.com','$2b$10$uRG1mSe6etLJkmUIaVnxRuhqcxfxjm8CjMSaAohQ4Lh8DXVPEh0BC','일반회원',1,'username2'),(3,'관리자','admin@example.com','$2b$10$8r3finKIIZc2ELdh.8MaLeCsfUmtPPiNQktJm3AZJmyCAh/KGrRVy','관리자',1,'adminuser'),(4,'유저3','user3@example.com','$2b$10$U65KIh347ham6RlUFMTda.4skxv3qj5SxCzNlUfVMS6MWE2gFyCAC','일반회원',1,'username3'),(5,'유저4','user4@example.com','$2b$10$GfFz6.VN116r93xre.XanOsIvqiOA1V0dpkUwDofZ/oBLzEghm4Q.','일반회원',1,'username4');
+INSERT INTO `users` VALUES (1,'유저1','user1@example.com','$2b$10$LLwnpFwdcPe06vsOCUUz2uz2jVLrmBEJglfwc.Ma88yLRmOxFZhxW','일반회원',1,'username1',NULL),(2,'유저2','user2@example.com','$2b$10$uRG1mSe6etLJkmUIaVnxRuhqcxfxjm8CjMSaAohQ4Lh8DXVPEh0BC','일반회원',1,'username2',NULL),(3,'관리자','admin@example.com','$2b$10$8r3finKIIZc2ELdh.8MaLeCsfUmtPPiNQktJm3AZJmyCAh/KGrRVy','관리자',1,'adminuser',NULL),(4,'유저3','user3@example.com','$2b$10$U65KIh347ham6RlUFMTda.4skxv3qj5SxCzNlUfVMS6MWE2gFyCAC','일반회원',1,'username3',NULL),(5,'유저4','user4@example.com','$2b$10$GfFz6.VN116r93xre.XanOsIvqiOA1V0dpkUwDofZ/oBLzEghm4Q.','일반회원',1,'username4',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
