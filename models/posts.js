@@ -4,12 +4,14 @@ const db = require('../utils/db');
 class Posts {
     static async searchPosts(username, searchTerm) {
         const query = `
-            SELECT post.*, 
+            SELECT post.*, writer.username AS writer_username,
                 CASE 
                     WHEN favorite.post_id IS NOT NULL THEN TRUE 
                     ELSE FALSE 
                 END AS is_favorite
             FROM post
+            LEFT JOIN users AS writer
+                ON post.writer_id = writer.user_id
             LEFT JOIN favorite 
                 ON favorite.post_id = post.post_id 
                 AND favorite.user_id = 
@@ -24,13 +26,17 @@ class Posts {
 
     static async getFavoritePostsByUsername(username){
         const query = `
-        SELECT *, 1 AS is_favorite
+        SELECT post.*, 
+            1 AS is_favorite, 
+            writer.username AS writer_username
         FROM favorite
-        LEFT JOIN Post ON favorite.post_id = post.post_id
-        WHERE favorite.user_id = 
-            (SELECT user_id 
+        LEFT JOIN post ON favorite.post_id = post.post_id
+        LEFT JOIN users AS writer ON post.writer_id = writer.user_id
+        WHERE favorite.user_id = (
+            SELECT user_id 
             FROM users
-            WHERE username = ?)
+            WHERE username = ?
+        );
         `;
         const [rows] = await db.query(query, [username]);
         return rows;
@@ -38,12 +44,14 @@ class Posts {
 
     static async getMyPostsByUsername(username){
         const query = `
-        SELECT *, post.post_id,
+        SELECT *, post.post_id,writer.username AS writer_username,
             CASE 
                 WHEN favorite.post_id IS NOT NULL THEN TRUE 
                 ELSE FALSE 
             END AS is_favorite
         FROM post
+        LEFT JOIN users AS writer
+            ON post.writer_id = writer.user_id
         LEFT JOIN favorite 
             ON favorite.post_id = post.post_id 
             AND favorite.user_id = (
@@ -59,6 +67,29 @@ class Posts {
         `;
         const [rows] = await db.query(query, [username, username]);
         return rows;
+    }
+
+    static async getPostById(username, postId){
+        const query = `
+        SELECT *, post.post_id AS post_id, writer.username AS writer_username,
+            CASE 
+                WHEN favorite.post_id IS NOT NULL THEN TRUE 
+                ELSE FALSE 
+            END AS is_favorite
+        FROM post
+        LEFT JOIN users AS writer
+            ON post.writer_id = writer.user_id
+        LEFT JOIN favorite 
+            ON favorite.post_id = post.post_id 
+            AND favorite.user_id = (
+                SELECT user_id 
+                FROM users
+                WHERE username = ?
+            )
+        WHERE post.post_id = ?
+        `;
+        const [rows] = await db.query(query, [username, postId]);
+        return rows[0];
     }
 
     static async postPost(postData) {
