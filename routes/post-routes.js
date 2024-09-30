@@ -7,5 +7,6 @@ const { authenticate } = require('../middlewares/auth-middleware');
 router.get('/search/:username', PostController.searchPosts);
 router.get('/favorite/by-username/:username', PostController.getFavoritePostsByUsername);
 router.get('/myPosts/by-username/:username', PostController.getMyPostsByUsername);
+router.post('/postPost', PostController.postPost);
 
 module.exports = router;

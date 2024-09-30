@@ -54,6 +54,27 @@ class PostsController {
             res.status(500).json({ message: err.message });
         }
     }
+
+    static async postPost(req, res){
+
+        try {
+            const { title, category, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = req.body;
+
+            // 필수 데이터 검증
+            if (!title || !category || !price || !emdId ||!latitude ||!longitude ||!locationDetail ||!text) {
+                return res.status(400).json({ error: 'Missing required fields' });
+            }
+
+            // 모델을 사용하여 새 게시물 생성
+            const postId = await Posts.postPost({ title, category, price, writerUsername, emdId, latitude, longitude, locationDetail, text });
+
+            // 성공 응답 반환
+            res.status(201).json({ message: 'Post created successfully', postId });
+        } catch (error) {
+            console.error('Error creating post:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
 }
 
 module.exports = PostsController;
