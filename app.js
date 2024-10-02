@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
     });
 
     // /utils/setupSocketEvents.js 에서 소켓 이벤트를 설정합니다.
-    setupSocketEvents(socket, io); // 소켓 이벤트 설정
+    // setupSocketEvents(socket, io); // 소켓 이벤트 설정
 });
 
 // 서버 실행
