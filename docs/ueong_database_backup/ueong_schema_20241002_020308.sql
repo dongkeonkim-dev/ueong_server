@@ -112,7 +112,6 @@ CREATE TABLE `chats` (
   `seller_id` int NOT NULL,
   `buyer_id` int NOT NULL,
   `last_message_id` int DEFAULT NULL,
-  `unread_count` int DEFAULT '0',
   `post_id` int NOT NULL,
   PRIMARY KEY (`chat_id`),
   KEY `fk_chats_users1_idx` (`seller_id`),

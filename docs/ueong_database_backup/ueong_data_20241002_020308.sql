@@ -71,7 +71,8 @@ UNLOCK TABLES;
 
 LOCK TABLES `chats` WRITE;
 /*!40000 ALTER TABLE `chats` DISABLE KEYS */;
-INSERT INTO `chats` VALUES (1,1,2,1,0,1),(2,1,2,2,0,2),(3,1,3,3,0,3);
+/*(chat_id, seller_id, buyer_id, last_message_id, post_id)*/;
+INSERT INTO `chats` VALUES (1,1,2,1,4),(2,1,2,2,2),(3,1,3,3,3);
 /*!40000 ALTER TABLE `chats` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -91,7 +92,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `messages` WRITE;
 /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
-INSERT INTO `messages` VALUES (1,1,'노트북 아직 있나요?','2024-05-23 08:46:11',1,1),(2,1,'네, 아직 있습니다.','2024-05-23 08:50:11',1,1),(3,1,'자켓 새건가요?','2024-05-23 09:46:12',1,2),(4,2,'네, 거의 새겁니다.','2024-05-23 08:46:11',1,2),(5,2,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,3);
+INSERT INTO `messages` VALUES (1,2,'노트북 아직 있나요?','2024-05-23 08:46:11',0,1),(2,1,'네, 아직 있습니다.','2024-05-23 08:50:11',0,1),(3,1,'자켓 새건가요?','2024-05-23 09:46:12',0,2),(4,2,'네, 거의 새겁니다.','2024-05-23 08:46:11',1,2),(5,2,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,3);
 /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
 UNLOCK TABLES;
 
