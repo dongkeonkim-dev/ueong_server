@@ -1,17 +1,28 @@
 // Server/controller/chat-controller.js
 const Posts = require('../models/posts');
+const PostSearchHistory = require('../models/post-search-history');
 
 class PostsController {
     static async searchPosts(req, res) {
         const username = req.params.username;
         const village = req.params.village;
-        const searchTerm = req.query.searchTerm || "";
+        const searchTerm = req.query.searchTerm;
         const sortBy = req.params.sortBy;
 
         try {
             const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
+            console.log("searchTerm: ", searchTerm)
+
+            if (searchTerm.length > 0){
+                const histories = await PostSearchHistory.getHistoryByUsername(username);
+                if (histories.some(history => history.search_term === searchTerm)) {
+                    await PostSearchHistory.updateHistory(username, searchTerm);
+                } else {
+                    await PostSearchHistory.addHistory(username, searchTerm);
+                }                
+            }
             if (posts.length > 0) { // 수정: posts가 배열이므로 길이 확인
-                console.log("Posts found: ", posts); // 응답 로그 추가
+                console.log(posts.length,"Posts found: ")//, posts); // 응답 로그 추가
                 res.json(posts);
             } else {
                 console.log("Posts not found: ", searchTerm); // 응답 로그 추가

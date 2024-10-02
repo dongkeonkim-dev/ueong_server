@@ -8,7 +8,7 @@ class PhotoController {
         try {
             const photos = await Photos.getPhotosByPostId(postId);
             if (photos.length > 0) { // 수정: posts가 배열이므로 길이 확인
-                console.log("Photos found: ", photos); // 응답 로그 추가
+                //console.log("Photos found: ", photos); // 응답 로그 추가
                 res.json(photos);
             } else {
                 console.log("Photos not found: ", postId); // 응답 로그 추가
@@ -20,7 +20,7 @@ class PhotoController {
         }
     }
 
-    
+
 }
 
 module.exports = PhotoController;

@@ -12,6 +12,7 @@ const photoRoutes = require('./routes/photo-routes');
 const messageRoutes = require('./routes/message-routes');
 const myVillageRoutes = require('./routes/my-village-routes');
 const addressRoutes = require('./routes/address-routes');
+const postSearchHistoryRoutes = require('./routes/post-search-history-routes');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,6 +33,7 @@ app.use('/photo', photoRoutes);
 app.use('/message', messageRoutes);
 app.use('/my-village', myVillageRoutes);
 app.use('/address', addressRoutes);
+app.use('/history',postSearchHistoryRoutes);
 
 // 소켓 연결 기본(성공, ERROR) 이벤트 처리
 io.on('connection', (socket) => {
@@ -48,7 +50,7 @@ io.on('connection', (socket) => {
     });
 
     // /utils/setupSocketEvents.js 에서 소켓 이벤트를 설정합니다.
-    setupSocketEvents(socket, io); // 소켓 이벤트 설정
+    // setupSocketEvents(socket, io); // 소켓 이벤트 설정
 });
 
 // 서버 실행
