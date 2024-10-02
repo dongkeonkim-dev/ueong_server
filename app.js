@@ -14,6 +14,7 @@ const photoRoutes = require('./routes/photo-routes');
 const messageRoutes = require('./routes/message-routes');
 const myVillageRoutes = require('./routes/my-village-routes');
 const addressRoutes = require('./routes/address-routes');
+const postSearchHistoryRoutes = require('./routes/post-search-history-routes');
 
 // 소켓 설정
 const server = http.createServer(app);
@@ -42,6 +43,7 @@ app.use('/photo', photoRoutes);
 app.use('/message', messageRoutes);
 app.use('/my-village', myVillageRoutes);
 app.use('/address', addressRoutes);
+app.use('/history',postSearchHistoryRoutes);
 
 // 소켓 연결 이벤트 처리
 io.on('connection', (socket) => {
