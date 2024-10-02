@@ -4,10 +4,12 @@ const Posts = require('../models/posts');
 class PostsController {
     static async searchPosts(req, res) {
         const username = req.params.username;
-        const searchTerm = req.query.searchTerm;
+        const village = req.params.village;
+        const searchTerm = req.query.searchTerm || "";
+        const sortBy = req.params.sortBy;
 
         try {
-            const posts = await Posts.searchPosts(username, searchTerm);
+            const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
             if (posts.length > 0) { // 수정: posts가 배열이므로 길이 확인
                 console.log("Posts found: ", posts); // 응답 로그 추가
                 res.json(posts);
