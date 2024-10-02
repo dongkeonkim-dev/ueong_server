@@ -11,8 +11,6 @@ class PostsController {
 
         try {
             const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
-            console.log("searchTerm: ", searchTerm)
-
             if (searchTerm.length > 0){
                 const histories = await PostSearchHistory.getHistoryByUsername(username);
                 if (histories.some(history => history.search_term === searchTerm)) {
