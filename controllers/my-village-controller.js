@@ -2,15 +2,15 @@
 const MyVillage = require('../models/my-village');
 
 class MyVillageController {
-    static async getMyVillageByUserId(req, res) {
-        const userId = req.params.userId;
+    static async getMyVillageByUsername(req, res) {
+        const username = req.params.username;
         try {
-            const myVillage = await MyVillage.getMyVillageByUserId(userId);
+            const myVillage = await MyVillage.getMyVillageByUsername(username);
             if (myVillage) {
                 console.log("User's village found: ", myVillage); // 응답 로그 추가
                 res.json(myVillage);
             } else {
-                console.log("User not found: ", userId); // 응답 로그 추가
+                console.log("User not found: ", username); // 응답 로그 추가
                 res.status(404).json({ message: 'User not found' });
             }
         } catch (err) {

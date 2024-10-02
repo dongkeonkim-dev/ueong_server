@@ -11,6 +11,15 @@ class Photos {
         const [rows] = await db.query(query, [postId]);
         return rows;
     }
-}
 
+    static async getPhotoById(postId) {
+        const query = `
+            SELECT *
+            FROM photo
+            WHERE post_id = ?
+        `;
+        const [rows] = await db.query(query, [postId]);
+        return rows;
+    }
+}
 module.exports = Photos;

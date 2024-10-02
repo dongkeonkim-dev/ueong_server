@@ -2,36 +2,71 @@
 const db = require('../utils/db');
 
 class Posts {
-    static async searchPosts(username, searchTerm) {
-        const query = `
-            SELECT post.*, writer.username AS writer_username,
-                CASE 
-                    WHEN favorite.post_id IS NOT NULL THEN TRUE 
-                    ELSE FALSE 
-                END AS is_favorite
-            FROM post
-            LEFT JOIN users AS writer
-                ON post.writer_id = writer.user_id
-            LEFT JOIN favorite 
-                ON favorite.post_id = post.post_id 
-                AND favorite.user_id = 
-                    (SELECT user_id 
-                    FROM users
-                    WHERE username = ?)
-            WHERE post_title LIKE ? OR text LIKE ?
+    static async searchPosts(username, village, searchTerm, sortBy) {
+        console.log(username, village, searchTerm, sortBy)
+        let query = `
+        SELECT post.*, 
+        writer.username AS writer_username, 
+        CASE 
+            WHEN favorite_count_table.favorite_count IS NULL THEN 0 
+            ELSE favorite_count_table.favorite_count 
+        END AS favorite_count,
+        CASE 
+            WHEN favorite.post_id IS NOT NULL THEN TRUE 
+            ELSE FALSE 
+        END AS is_favorite
+        FROM post
+        LEFT JOIN users AS writer
+            ON post.writer_id = writer.user_id
+        LEFT JOIN favorite 
+            ON favorite.post_id = post.post_id 
+            AND favorite.user_id = (
+                SELECT user_id 
+                FROM users
+                WHERE username = ?
+            )
+         LEFT JOIN (
+            SELECT post_id, COUNT(*) AS favorite_count
+            FROM favorite
+            GROUP BY post_id
+       ) AS favorite_count_table
+       ON post.post_id = favorite_count_table.post_id
+        WHERE (post.post_title LIKE ? OR post.text LIKE ?)
+        AND post.emd_id = ?
         `;
-        const [rows] = await db.query(query, [username, `%${searchTerm}%`, `%${searchTerm}%`]);
+        
+        // 정렬 기준 추가
+        if (sortBy === "price") {
+            query += " ORDER BY price ASC;";
+        } else if (sortBy === "favoriteCount") {
+            query += " ORDER BY favorite_count DESC;";
+        } else {
+            query += " ORDER BY create_at DESC;"; // 기본값으로 정렬
+        }
+    
+        const [rows] = await db.query(query, [username, `%${searchTerm}%`, `%${searchTerm}%`, village]);
         return rows;
     }
+    
 
     static async getFavoritePostsByUsername(username){
         const query = `
         SELECT post.*, 
             1 AS is_favorite, 
-            writer.username AS writer_username
+            writer.username AS writer_username,
+            CASE 
+                WHEN favorite_count_table.favorite_count IS NULL THEN 0 
+                ELSE favorite_count_table.favorite_count 
+            END AS favorite_count
         FROM favorite
         LEFT JOIN post ON favorite.post_id = post.post_id
         LEFT JOIN users AS writer ON post.writer_id = writer.user_id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS favorite_count
+            FROM favorite
+            GROUP BY post_id
+       ) AS favorite_count_table
+       ON post.post_id = favorite_count_table.post_id
         WHERE favorite.user_id = (
             SELECT user_id 
             FROM users
@@ -48,7 +83,11 @@ class Posts {
             CASE 
                 WHEN favorite.post_id IS NOT NULL THEN TRUE 
                 ELSE FALSE 
-            END AS is_favorite
+            END AS is_favorite,
+            CASE 
+            WHEN favorite_count_table.favorite_count IS NULL THEN 0 
+            ELSE favorite_count_table.favorite_count 
+        END AS favorite_count
         FROM post
         LEFT JOIN users AS writer
             ON post.writer_id = writer.user_id
@@ -59,6 +98,12 @@ class Posts {
                 FROM users
                 WHERE username = ?
             )
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS favorite_count
+            FROM favorite
+            GROUP BY post_id
+        ) AS favorite_count_table
+        ON post.post_id = favorite_count_table.post_id
         WHERE post.writer_id = (
             SELECT user_id 
             FROM users
@@ -75,7 +120,11 @@ class Posts {
             CASE 
                 WHEN favorite.post_id IS NOT NULL THEN TRUE 
                 ELSE FALSE 
-            END AS is_favorite
+            END AS is_favorite,
+            CASE 
+            WHEN favorite_count_table.favorite_count IS NULL THEN 0 
+            ELSE favorite_count_table.favorite_count 
+        END AS favorite_count
         FROM post
         LEFT JOIN users AS writer
             ON post.writer_id = writer.user_id
@@ -86,6 +135,12 @@ class Posts {
                 FROM users
                 WHERE username = ?
             )
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) AS favorite_count
+            FROM favorite
+            GROUP BY post_id
+        ) AS favorite_count_table
+        ON post.post_id = favorite_count_table.post_id
         WHERE post.post_id = ?
         `;
         const [rows] = await db.query(query, [username, postId]);
