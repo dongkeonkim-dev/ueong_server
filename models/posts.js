@@ -149,7 +149,11 @@ class Posts {
 
     static async postPost(postData) {
         try {
-            const { title, category, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = postData;
+            const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = postData;
+    
+            // 값 확인을 위한 로그 추가
+            console.log("Post data:", postData);
+    
             const query = `
                 INSERT INTO post 
                 SET post_title = ?, 
@@ -165,8 +169,21 @@ class Posts {
                     create_at = NOW(),
                     is_active = ?
             `;
-            const values = [title, category, "거래대기", price, writerUsername, emdId, latitude, longitude, locationDetail, text, 1];
+    
+            const values = [title, categoryId, "거래대기", price, writerUsername, emdId, latitude, longitude, locationDetail, text, 1];
+    
+            // 값 확인을 위한 로그 추가
+            console.log("Query values:", values);
+    
             const [result] = await db.execute(query, values);
+    
+            // 쿼리 실행 후 결과 확인
+            console.log("Insert result:", result);
+            if (result.affectedRows === 0) {
+                console.error("Failed to insert the post into the database.");
+                throw new Error("Database insertion failed.");
+            }
+    
             return result.insertId; // 생성된 게시물 ID 반환
         } catch (error) {
             console.error('Error creating post:', error);

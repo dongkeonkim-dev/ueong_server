@@ -23,6 +23,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use((req, res, next) => { console.log(`${req.method} ${req.url}`); next(); });
 
 // 라우트 설정
 app.use('/auth', authRoutes);

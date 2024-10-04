@@ -20,8 +20,7 @@ class PostSearchHistoryController {
     }
 
     static async deleteHistoryBySearchTerm(req, res) {
-        const username = req.params.username;
-        const searchTerm = req.params.searchTerm;
+        const { username, searchTerm } = req.query;
         
         try {
             const result = await PostSearchHistory.deleteHistory(username, searchTerm);
