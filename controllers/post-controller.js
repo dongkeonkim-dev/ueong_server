@@ -2,6 +2,7 @@
 const Posts = require('../models/posts');
 const Photos = require('../models/photos');
 const PostSearchHistory = require('../models/post-search-history');
+const { uploadImage } = require('../middlewares/multer-middleware');
 
 class PostsController {
     static async searchPosts(req, res) {
@@ -84,21 +85,30 @@ class PostsController {
     }
 
     // 게시물 생성 및 파일 업로드 처리 함수
-    static async postPost(req, res) {
+    static async uploadPost(req, res) {
+
+        var postId
+
         try {
             // 게시물 생성
-            const postId = await PostsController.createPost(req.body);
+            postId = await PostsController.createPost(req.body);
             if (!postId) {
                 return res.status(400).json({ error: 'Failed to create post' });
             }
-
-            // 파일 업로드
-            PostsController.uploadFiles(req, res, postId);
-
         } catch (error) {
             console.error('Error creating post:', error);
             res.status(500).json({ error: 'Internal Server Error' });
         }
+        
+        if (!req.files || req.files.length === 0) {
+            res.status(201).json({ message: `Post created successfully and no files, ${(postId)}`});
+           return     
+        }
+
+        PostsController.uploadFiles(req, res, postId);
+        res.status(201).json({ message: `Post and files created successfully, ${(postId)}`});
+
+        return
     }
 
     // 게시물 생성 로직 분리
@@ -121,7 +131,7 @@ class PostsController {
         }
 
         // 게시물 생성
-        const postId = await Posts.postPost({ title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text });
+        const postId = await Posts.createPost({ title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text });
         return postId;
     }
 

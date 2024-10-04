@@ -147,7 +147,7 @@ class Posts {
         return rows[0];
     }
 
-    static async postPost(postData) {
+    static async createPost(postData) {
         try {
             const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = postData;
     

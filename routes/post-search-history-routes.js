@@ -5,6 +5,6 @@ const PostSearchHistoryController = require('../controllers/post-search-history-
 const { authenticate } = require('../middlewares/auth-middleware');
 
 router.get('/username/:username', PostSearchHistoryController.getHistoryByUsername);
-router.delete('/delete', PostSearchHistoryController.deleteHistoryBySearchTerm);
+router.delete('/', PostSearchHistoryController.deleteHistoryBySearchTerm);
 
 module.exports = router;

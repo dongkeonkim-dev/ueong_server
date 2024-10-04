@@ -8,6 +8,6 @@ router.get('/search/username/:username', PostController.searchPosts);
 router.get('/favorite/username/:username', PostController.getFavoritePostsByUsername);
 router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
 router.get('/postId/:postId/username/:username/', PostController.getPostById);
-router.post('/postPost', PostController.postPost);
+router.post('/', PostController.uploadPost);
 
 module.exports = router;
