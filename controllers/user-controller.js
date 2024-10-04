@@ -72,6 +72,27 @@ class UserController {
         }
     }
 
+    static async getUserByUsername(req, res) {
+        try {
+            const username = req.body.username || req.params.username; // req.body에서 username을 가져오거나 params에서 가져옵니다.
+            if (!username) {
+                return res.status(400).json({ message: 'Username is required' }); // username이 없을 경우 400 에러 응답
+            }
+    
+            const user = await Users.getUserByUsername(username); // 데이터베이스에서 사용자 정보를 가져옵니다.
+            if (user) {
+                console.log("User found: ", user); // 사용자 정보가 존재할 경우
+                return res.json(user); // 사용자 정보를 JSON 형태로 응답합니다.
+            } else {
+                console.log("User not found: ", username); // 사용자를 찾지 못했을 경우
+                return res.status(404).json({ message: 'User not found' }); // 404 에러 응답
+            }
+        } catch (error) {
+            console.error('Error fetching user:', error); // 오류 발생 시 콘솔에 로그
+            return res.status(500).json({ message: 'Internal server error', error: error.message }); // 서버 내부 오류 응답
+        }
+    }
+
     static async deleteOldPhoto(profilePhotoUrl) {
         if (profilePhotoUrl) {
             const previousPhotoPath = path.join(__dirname, '..', profilePhotoUrl);
