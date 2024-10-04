@@ -14,6 +14,10 @@ const myVillageRoutes = require('./routes/my-village-routes');
 const addressRoutes = require('./routes/address-routes');
 const postSearchHistoryRoutes = require('./routes/post-search-history-routes');
 
+//SocketEvents
+const setupSocketEvents = require('./utils/setupSocketEvents'); 
+
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server, { allowEIO3: true });
@@ -39,19 +43,9 @@ app.use('/history',postSearchHistoryRoutes);
 // 소켓 연결 기본(성공, ERROR) 이벤트 처리
 io.on('connection', (socket) => {
     console.log(`소켓 ${socket.id}가 연결되었습니다.`);
-    
-    // 소켓 연결 성공 처리
-    socket.on('acknowledge', (message) => {
-        console.log(`클라이언트로부터 확인 메시지: ${message}`);
-    });
-    
-    // 소켓 연결 ERROR 처리
-    socket.on('error', (error) => {
-        console.log(`소켓 ${socket.id}에서 오류 발생: ${error}`);
-    });
 
     // /utils/setupSocketEvents.js 에서 소켓 이벤트를 설정합니다.
-    // setupSocketEvents(socket, io); // 소켓 이벤트 설정
+    setupSocketEvents(socket, io); // 소켓 이벤트 설정
 });
 
 // 서버 실행
