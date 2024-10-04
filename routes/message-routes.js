@@ -4,6 +4,6 @@ const router = express.Router();
 const MessageController = require('../controllers/message-controller');
 const { authenticate } = require('../middlewares/auth-middleware');
 
-router.get('/by-chatter/:username/:chatter', MessageController.getMessagesByChatter);
+router.get('/username/:username', MessageController.getMessagesByChatter);
 
 module.exports = router;

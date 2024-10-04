@@ -39,14 +39,14 @@ class Users {
         if (nickname) { setFields.push(`nickname = ?`); values.push(nickname);}
         if (profilePhotoUrl) { setFields.push(`profile_photo_url = ?`); values.push(profilePhotoUrl); }
 
+        // WHERE 조건에 해당하는 username 추가
+        let whereQuery = ` WHERE username = ?`;
+        values.push(username);
+
         // SET 문이 비어있지 않은 경우에만 쿼리를 실행
         if (setFields.length > 0) {
             let setQuery = ` SET ` + setFields.join(', ');
             let finalQuery = updateQuery + setQuery + whereQuery;
-
-            // WHERE 조건에 해당하는 username 추가
-            let whereQuery = ` WHERE username = ?`;
-            values.push(username);
 
             try {
                 const [result] = await db.query(finalQuery, values);

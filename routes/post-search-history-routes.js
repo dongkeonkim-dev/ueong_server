@@ -4,7 +4,7 @@ const router = express.Router();
 const PostSearchHistoryController = require('../controllers/post-search-history-controller');
 const { authenticate } = require('../middlewares/auth-middleware');
 
-router.get('/by-username/:username', PostSearchHistoryController.getHistoryByUsername);
-router.delete('/delete-by-search-term/:username/:searchTerm', PostSearchHistoryController.deleteHistoryBySearchTerm);
+router.get('/username/:username', PostSearchHistoryController.getHistoryByUsername);
+router.delete('/delete', PostSearchHistoryController.deleteHistoryBySearchTerm);
 
 module.exports = router;

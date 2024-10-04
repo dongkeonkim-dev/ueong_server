@@ -4,7 +4,7 @@ const Message = require('../models/messages');
 class MessageController {
     static async getMessagesByChatter(req, res) {
         const username = req.params.username;
-        const chatter = req.params.chatter;
+        const chatter = req.query.chatter;
         try {
             const messages = await Message.getMessagesByChatter(username, chatter);
             if (messages) {

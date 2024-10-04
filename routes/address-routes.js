@@ -4,6 +4,6 @@ const router = express.Router();
 const AddressController = require('../controllers/address-controller');
 const { authenticate } = require('../middlewares/auth-middleware');
 
-router.get('/full-address-by-id/:emdId', AddressController.getFullAddressById);
+router.get('/emdId/:emdId', AddressController.getFullAddressById);
 
 module.exports = router;
