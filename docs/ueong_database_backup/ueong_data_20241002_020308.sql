@@ -72,7 +72,7 @@ UNLOCK TABLES;
 LOCK TABLES `chats` WRITE;
 /*!40000 ALTER TABLE `chats` DISABLE KEYS */;
 /*(chat_id, seller_id, buyer_id, last_message_id, post_id)*/;
-INSERT INTO `chats` VALUES (1,1,2,1,4),(2,1,2,2,2),(3,1,3,3,3);
+INSERT INTO `chats` VALUES (1,1,2,1,1),(2,1,2,2,2),(3,1,3,3,3);
 /*!40000 ALTER TABLE `chats` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -82,7 +82,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `favorite` WRITE;
 /*!40000 ALTER TABLE `favorite` DISABLE KEYS */;
-INSERT INTO `favorite` VALUES (1,1),(2,2),(3,3),(4,4),(5,5);
+INSERT INTO `favorite` VALUES (1,1),(2,2),(3,3),(4,4),(5,5);    
 /*!40000 ALTER TABLE `favorite` ENABLE KEYS */;
 UNLOCK TABLES;
 
