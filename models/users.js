@@ -26,7 +26,7 @@ class Users {
     }
 
     static async updateUser(userData) {
-        const { username, email, nickname, profilePhotoUrl, password } = userData;
+        const { username, email, nickname, profileImageUrl } = userData;
 
         // 기본 UPDATE
         let updateQuery = `UPDATE users`;
@@ -37,7 +37,7 @@ class Users {
 
         if (email) { setFields.push(`email = ?`); values.push(email); }
         if (nickname) { setFields.push(`nickname = ?`); values.push(nickname);}
-        if (profilePhotoUrl) { setFields.push(`profile_photo_url = ?`); values.push(profilePhotoUrl); }
+        if (profileImageUrl) { setFields.push(`profile_photo_url = ?`); values.push(profileImageUrl); }
 
         // WHERE 조건에 해당하는 username 추가
         let whereQuery = ` WHERE username = ?`;
