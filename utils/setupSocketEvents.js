@@ -1,5 +1,76 @@
 const db = require('./db');
 
+// 메시지 큐 선언 (FIFO 방식)
+let messageQueue = [];
+
+// 메시지 큐 처리 중인지 여부 플래그
+let isProcessingQueue = false;
+
+// 메시지 큐에 메시지 추가 및 처리 시작
+function addToQueue(messageData) {
+    messageQueue.push(messageData); // 메시지를 큐에 추가
+    processQueue(); // 큐 처리 시작
+}
+
+// 메시지 큐 처리 함수
+async function processQueue() {
+    if (isProcessingQueue) return; // 이미 처리 중이면 중단
+
+    isProcessingQueue = true; // 처리 중으로 상태 변경
+
+    while (messageQueue.length > 0) {
+        const messageData = messageQueue.shift(); // 큐에서 첫 번째 메시지 꺼냄
+        await processMessage(messageData); // 메시지 처리
+    }
+
+    isProcessingQueue = false; // 처리 완료 후 상태 변경
+}
+
+// 실제 메시지 처리 로직
+async function processMessage({ chatRoomId, username, content }) {
+    console.log(`메시지 처리 중: ${username} -> ${content}`);
+
+    try {
+        // username으로 user_id를 가져오는 쿼리
+        const userIdQuery = 'SELECT user_id FROM users WHERE username = ?';
+        const [userResults] = await db.query(userIdQuery, [username]);
+
+        if (userResults.length === 0) {
+            throw new Error('사용자를 찾을 수 없습니다.');
+        }
+
+        const senderId = userResults[0].user_id;
+
+        // 트랜잭션 시작
+        const connection = await db.getConnection();
+        await connection.beginTransaction();
+
+        // 메시지를 messages 테이블에 저장하는 쿼리
+        const insertMessageQuery = `
+            INSERT INTO messages (sender_id, message_text, chat_id, sent_time)
+            VALUES (?, ?, ?, NOW())
+        `;
+        const [insertResult] = await connection.execute(insertMessageQuery, [senderId, content, chatRoomId]);
+
+        // 생성된 메시지의 ID 가져오기
+        const messageId = insertResult.insertId;
+
+        // chats 테이블의 last_message_id 업데이트
+        const updateChatQuery = 'UPDATE chats SET last_message_id = ? WHERE chat_id = ?';
+        await connection.execute(updateChatQuery, [messageId, chatRoomId]);
+
+        // 트랜잭션 커밋
+        await connection.commit();
+        connection.release();
+
+        console.log(`메시지 저장 완료: ${messageId}`);
+    } catch (error) {
+        console.error('메시지 처리 중 오류 발생:', error);
+    }
+}
+
+//-----------------------------------------------------------------------------------------------------------------------------
+
 const setupSocketEvents = (socket, io) => {
     // 소켓 연결 성공 시 성공 메시지 수신과 전송
     socket.on('acknowledge', (message) => {
@@ -164,6 +235,42 @@ const setupSocketEvents = (socket, io) => {
         }
     });
 
+    // 채팅방 조인 이벤트 수신 (사용자가 처음 앱에 접속했을때 기존에 참여중인 채팅방 연결)
+    // 여러 채팅방에 참가하는 이벤트
+    socket.on('joinChatRoom', (roomIds) => {
+        roomIds.forEach((roomId) => {
+            socket.join(roomId);
+            console.log(`사용자가 ${roomId} 방에 참가함: ${socket.id}`);
+        });
+    });
+
+
+    // 채팅방 조인 이벤트 수신 (사용자가 새로운 채징방 입장시 채팅방 연결)
+
+    // 메시지 보내기 이벤트 처리
+    socket.on('sendMessage', (chatRoomId, username, content) => {
+        console.log(`${chatRoomId}, ${username}, ${content}`); // 데이터 로그 추가
+        
+
+        // 메시지 큐에 메시지 추가
+        addToQueue({ chatRoomId, username, content });
+
+        // 클라이언트에게 메시지 전송
+        io.to(chatRoomId).emit('sendMessageResponse', {
+            success: true, // 또는 조건에 따라 true/false 결정
+            messages: [
+                {
+                    username: username,
+                    content: content,
+                    chatRoomId: chatRoomId,
+                    timestamp: new Date(),
+                }
+            ]
+        });
+    });
+
 };
 
 module.exports = setupSocketEvents;
+
+
