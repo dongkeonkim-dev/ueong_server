@@ -1,10 +1,10 @@
 // Server/models/my-village.js
 const db = require('../utils/db');
 
-class MyVillage {
+class Emd {
     static async getMyVillageByUsername(username) {
         const query = `
-            SELECT v.emd_id as emd_id, emd_name
+            SELECT ad_e.*
             FROM my_village as v
             LEFT JOIN address_emd as ad_e 
             ON v.emd_id = ad_e.emd_id
@@ -17,6 +17,17 @@ class MyVillage {
         const [rows] = await db.query(query, [username]);
         return rows;
     }
+
+    static async getEmd(emdId) {
+        const query = `
+            SELECT *
+            FROM address_emd
+            WHERE emd_id = ?
+        `;
+
+        const [rows] = await db.query(query, [emdId]);
+        return rows[0];
+    }
 }
 
-module.exports = MyVillage;
+module.exports = Emd;
