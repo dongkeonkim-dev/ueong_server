@@ -57,64 +57,56 @@ const setupSocketEvents = (socket, io) => {
 
     // 채팅 리스트 이벤트 수신
     socket.on('chatList', async (username) => {
+        console.log(`chatList수신데이터 - username: ${username}`);
         try {
-            // 데이터베이스에 대한 연결 생성
-            const connection = await createDbConnection();
-
             // 채팅 정보를 가져오기 위한 SQL 쿼리
             const query = `
             SELECT 
-            c.chat_id AS id, 
-            CASE 
-                WHEN c.buyer_id = u.user_id THEN u2.nickname 
-                ELSE u.nickname 
-            END AS partnerNickname,
-            CASE 
-                WHEN c.buyer_id = u.user_id THEN u2.profile_photo_url 
-                ELSE u.profile_photo_url 
-            END AS partnerProfilePhotoURL,
+            c.chat_id,
+            u2.nickname AS partnerNickname,
+            u2.username AS partnerUsername,
+            u2.profile_photo_url AS partnerProfilePhotoURL,
             m.message_text AS lastMessageText,
             m.sent_time AS rawLastSentTime,
             c.post_id AS relatedPostId,
-            (SELECT COUNT(*) 
-            FROM messages 
-            WHERE chat_id = c.chat_id AND is_read = 0 AND sender_id != u.user_id) AS unreadMessages,
-            CASE 
-                WHEN c.buyer_id = u.user_id THEN c.seller_id 
-                ELSE c.buyer_id 
-            END AS partnerId -- 상대방의 ID 추가
+            COUNT(m_unread.message_id) AS unreadMessages,
+            u_last_sender.nickname AS lastSenderNickname  -- 마지막 메시지 보낸 유저의 닉네임 추가
             FROM 
                 chats c
             JOIN 
-                users u ON u.user_id = ? -- 로그인한 사용자 ID
+                users u1 ON c.seller_id = u1.user_id OR c.buyer_id = u1.user_id
+            JOIN 
+                users u2 ON (c.seller_id = u2.user_id OR c.buyer_id = u2.user_id) AND u1.user_id <> u2.user_id
             LEFT JOIN 
-                users u2 ON u2.user_id = 
-                    CASE 
-                        WHEN c.buyer_id = u.user_id THEN c.seller_id 
-                        ELSE c.buyer_id 
-                    END
+                messages m ON c.last_message_id = m.message_id
             LEFT JOIN 
-                messages m ON m.message_id = c.last_message_id -- last_message_id로 조인
+                messages m_unread ON c.chat_id = m_unread.chat_id AND m_unread.sender_id <> u1.user_id AND m_unread.is_read = 0
+            LEFT JOIN 
+                users u_last_sender ON m.sender_id = u_last_sender.user_id  -- 마지막 메시지를 보낸 유저의 정보를 가져오기 위한 조인
             WHERE 
-                u.username = ? -- 특정 username으로 검색
-            ORDER BY 
-                m.sent_time DESC;
+                u1.username = ?  -- username을 바인딩 변수로 사용
+            GROUP BY 
+                c.chat_id, u2.nickname, u2.username, u2.profile_photo_url, m.message_text, m.sent_time, c.post_id, u_last_sender.nickname;  -- 마지막 메시지 보낸 유저의 닉네임을 GROUP BY에 추가
             `;
 
-            const [results] = await connection.execute(query, [username, username]);
+            const [results] = await db.execute(query, [username]);
+            console.log("채팅리스트 불러오기 쿼리 실행 완료!")
+            //쿼리문 결과값 출력
+            console.log(`results: ${JSON.stringify(results, null, 2)}`); 
 
             // 클라이언트에 채팅 데이터를 전송
             socket.emit('chatListResponse', {
-                success: true,
-                chats: results.map(row => ({
-                    id: row.chat_id,
-                    buyerUsername: row.buyerUsername,
-                    buyerNickname: row.buyerNickname,
-                    sellerNickname: row.sellerNickname,
-                    sellerProfilePhotoURL: row.sellerProfilePhotoURL,
+                    success: true,
+                    chats: results.map(row => ({
+                    id: row.chat_id,  // "id"로 변경
+                    partnerUsername: row.partnerUsername,
+                    partnerNickname: row.partnerNickname,
+                    partnerProfilePhotoURL: row.partnerProfilePhotoURL,
                     lastMessageText: row.lastMessageText,
                     rawLastSentTime: row.rawLastSentTime,
-                    unreadMessages: row.unreadMessages
+                    relatedPostId: row.relatedPostId,
+                    unreadMessages: row.unreadMessages,
+                    lastSenderNickname: row.lastSenderNickname
                 }))
             });
         } catch (error) {
@@ -122,6 +114,56 @@ const setupSocketEvents = (socket, io) => {
             socket.emit('chatListResponse', { success: false });
         }
     });
+
+    // 메시지 리스너 이벤트 수신
+    socket.on('loadExistingMessages', async (chatId) => {
+        console.log(`message불러오기: ${chatId}`);
+    
+        try {
+            // 메시지 정보를 가져오기 위한 SQL 쿼리
+            const query = `
+                SELECT 
+                    m.message_id AS messageId,
+                    u.username AS username,
+                    u.nickname AS userNickname,
+                    u.profile_photo_url AS senderProfilePhotoURL,
+                    m.message_text AS messageText,
+                    m.sent_time AS sentTime,
+                    m.is_read AS isRead,
+                    m.chat_id AS chatId
+                FROM 
+                    messages m
+                JOIN 
+                    users u ON m.sender_id = u.user_id
+                WHERE 
+                    m.chat_id = ?;
+            `;
+    
+            const [results] = await db.execute(query, [chatId]);
+            console.log("채팅 메시지 불러오기 쿼리 실행 완료!");
+            // 쿼리 결과값 출력
+            console.log(`results: ${JSON.stringify(results, null, 2)}`);
+    
+            // 클라이언트에 메시지 데이터를 전송
+            socket.emit('loadExistingMessagesResponse', {
+                success: true,
+                messages: results.map(row => ({
+                    messageId: row.messageId,  // 메시지 ID
+                    username: row.username,  // 메시지 보낸 사용자 이름
+                    userNickname: row.userNickname,  // 보낸 사용자 닉네임
+                    senderProfilePhotoURL: row.senderProfilePhotoURL,  // 사용자 프로필 사진 URL
+                    messageText: row.messageText,  // 메시지 내용
+                    sentTime: row.sentTime,  // 메시지 보낸 시간
+                    isRead: row.isRead,  // 메시지 읽음 여부
+                    chatId: row.chatId  // 채팅방 ID
+                }))
+            });
+        } catch (error) {
+            console.error("채팅 메시지 가져오기 중 에러 발생:", error);
+            socket.emit('loadExistingMessagesResponse', { success: false });
+        }
+    });
+
 };
 
 module.exports = setupSocketEvents;
