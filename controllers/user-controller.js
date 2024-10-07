@@ -3,133 +3,86 @@ const { uploadFiles } = require('../middlewares/multer-middleware');
 const fs = require('fs');
 const path = require('path');
 
+const { HttpError, validate, success } = require('../utils/handlers');
+
 class UserController {
-    static async savePhotoAndUpdateUser(req, res) {
+    static async savePhotoAndUpdateUser(req, res, next) {
         try {
-            const contentType = req.headers['content-type'];
-
-            // 파일 업로드 및 JSON 파싱 처리
-            if (contentType && contentType.includes('multipart/form-data')) {
-                uploadFiles(req, res, async (err) => {
-                    if (err) {
-                        console.error('Error uploading files:', err);
-                        return res.status(500).json({ message: 'File upload failed', error: err.message });
-                    }
-
-                    await UserController.processUserUpdate(req, res);
-                });
-            } else if (contentType && contentType.includes('application/json')) {
-                // application/json 요청일 경우 - 일반적인 데이터만 처리
-                await UserController.processUserUpdate(req, res);
+            if (req.is('multipart/form-data')) {
+                await UserController.handleMultipartFormData(req, res, next);
+            } else if (req.is('application/json')) {
+                await UserController.handleJsonRequest(req, res, next);
             } else {
-                res.status(400).json({ message: 'Unsupported content type' });
+                throw new HttpError('Unsupported Content-Type', 400);
             }
-        } catch (error) {
-            console.error('Error processing request:', error);
-            res.status(500).json({ message: 'Internal server error', error: error.message });
-        }
+        } catch (error) { next(error); }
     }
 
-    static async processUserUpdate(req, res) {
-        try {
-            // 사용자 정보 가져오기
-            const user = await UserController.getUser(req);
-            if (!user) {
-                return res.status(404).json({ message: 'User not found' });
-            }
+    static async handleMultipartFormData(req, res, next) {
+        //멀터 미들웨어 사용
+        uploadFiles(req, res, async (err) => {
+            if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
 
-            // 프로필 사진 업데이트 처리
-            let profilePhotoUrl = user.profile_photo_url;
+            const user = await Users.getUserByUsername(req.body.username);
+            validate(user, 'User not found', 404); // 사용자 존재 확인
 
-            if (req.files && req.files.images && req.files.images.length > 0) {
-                // 새 프로필 사진 설정
-                profilePhotoUrl = `/uploads/images/${req.files.images[0].filename}`;
+            let profileImageUrl = user.profile_photo_url;
 
-                // 이전 프로필 사진 삭제
+            if (req.uploadedFiles.images?.length) {
+                profileImageUrl = `/uploads/images/${req.uploadedFiles.images[0]}`;
                 await UserController.deleteOldPhoto(user.profile_photo_url);
             }
 
-            // 사용자 데이터 업데이트
-            await UserController.updateUser(req, res, profilePhotoUrl);
-        } catch (error) {
-            console.error('Error processing user update:', error);
-            res.status(500).json({ message: 'Internal server error', error: error.message });
-        }
+            await UserController.updateUser(req, res, profileImageUrl);
+        });
     }
 
-    static async getUser(req) {
+    static async handleJsonRequest(req, res, next) {
         try {
-            const username = req.body.username || (req.parsedBody && req.parsedBody.username);
-            if (!username) {
-                throw new Error('Username is required');
-            }
+            const user = await Users.getUserByUsername(req.body.username);
+            validate(user, 'User not found', 404); // 사용자 존재 확인
+
+            await UserController.updateUser(req, res, user.profile_photo_url);
+        } catch (error) { next(error); }
+    }
+
+    static async getUserByUsername(req, res, next) {
+        try {
+            const username = req.body.username || req.params.username;
+            validate(username, 'Username is required', 400); // 유효성 검사
 
             const user = await Users.getUserByUsername(username);
-            return user;
-        } catch (error) {
-            console.error('Error fetching user:', error);
-            throw error;
-        }
+            validate(user, 'User not found', 404); // 사용자 존재 확인
+
+            return res.json(user);
+        } catch (error) { next(error); }
     }
 
-    static async getUserByUsername(req, res) {
-        try {
-            const username = req.body.username || req.params.username; // req.body에서 username을 가져오거나 params에서 가져옵니다.
-            if (!username) {
-                return res.status(400).json({ message: 'Username is required' }); // username이 없을 경우 400 에러 응답
-            }
-    
-            const user = await Users.getUserByUsername(username); // 데이터베이스에서 사용자 정보를 가져옵니다.
-            if (user) {
-                console.log("User found: ", user); // 사용자 정보가 존재할 경우
-                return res.json(user); // 사용자 정보를 JSON 형태로 응답합니다.
-            } else {
-                console.log("User not found: ", username); // 사용자를 찾지 못했을 경우
-                return res.status(404).json({ message: 'User not found' }); // 404 에러 응답
-            }
-        } catch (error) {
-            console.error('Error fetching user:', error); // 오류 발생 시 콘솔에 로그
-            return res.status(500).json({ message: 'Internal server error', error: error.message }); // 서버 내부 오류 응답
-        }
-    }
-
-    static async deleteOldPhoto(profilePhotoUrl) {
-        if (profilePhotoUrl) {
-            const previousPhotoPath = path.join(__dirname, '..', profilePhotoUrl);
+    static async deleteOldPhoto(profileImageUrl) {
+        if (profileImageUrl) {
+            const previousPhotoPath = path.join(__dirname, '..', profileImageUrl);
             fs.unlink(previousPhotoPath, (unlinkErr) => {
-                if (unlinkErr) {
-                    console.error(`Error deleting old profile photo: ${unlinkErr.message}`);
-                } else {
-                    console.log(`Previous profile photo deleted: ${previousPhotoPath}`);
-                }
+                if (unlinkErr) console.error(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
             });
         }
     }
 
-    static async updateUser(req, res, profilePhotoUrl = null) {
+    static async updateUser(req, res, profileImageUrl) {
         try {
-            const { username, email, nickname } = req.parsedBody || req.body;
+            const { username, email, nickname } = req.body;
 
             const updatedUserData = {
                 username,
                 email,
                 nickname,
-                profile_photo_url: profilePhotoUrl || req.body.profile_photo_url
+                profileImageUrl
             };
 
             const updateSuccess = await Users.updateUser(updatedUserData);
-            if (updateSuccess) {
-                res.status(200).json({
-                    message: 'User updated successfully',
-                    profile_photo_url: updatedUserData.profile_photo_url
-                });
-            } else {
-                res.status(500).json({ message: 'Failed to update user' });
-            }
-        } catch (error) {
-            console.error('Error updating user:', error);
-            res.status(500).json({ message: 'Failed to update user', error: error.message });
-        }
+            validate(updateSuccess, 'Failed to update user', 500); // 업데이트 성공 여부 검사
+
+            success(res, { profileImageUrl }, 'User updated successfully'); // 성공적인 응답 처리
+        } catch (error) { next(error); }
     }
 }
 

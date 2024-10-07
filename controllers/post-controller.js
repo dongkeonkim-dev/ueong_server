@@ -7,20 +7,20 @@ const { uploadImage } = require('../middlewares/multer-middleware');
 class PostsController {
     static async searchPosts(req, res) {
         const username = req.params.username;
-        const {village, searchTerm, sortBy} = req.query;
+        const { village, searchTerm, sortBy } = req.query;
 
         try {
             const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
-            if (searchTerm.length > 0){
+            if (searchTerm.length > 0) {
                 const histories = await PostSearchHistory.getHistoryByUsername(username);
                 if (histories.some(history => history.search_term === searchTerm)) {
                     await PostSearchHistory.updateHistory(username, searchTerm);
                 } else {
                     await PostSearchHistory.addHistory(username, searchTerm);
-                }                
+                }
             }
-            if (posts.length > 0) { // 수정: posts가 배열이므로 길이 확인
-                console.log(posts.length,"Posts found: ")//, posts); // 응답 로그 추가
+            if (posts.length > 0) {
+                console.log(posts.length, "Posts found: "); // 응답 로그 추가
                 res.json(posts);
             } else {
                 console.log("Posts not found: ", searchTerm); // 응답 로그 추가
@@ -36,7 +36,7 @@ class PostsController {
         const username = req.params.username;
         try {
             const posts = await Posts.getFavoritePostsByUsername(username);
-            if (posts.length > 0) { // 수정: posts가 배열이므로 길이 확인
+            if (posts.length > 0) {
                 console.log("Posts found: ", posts); // 응답 로그 추가
                 res.json(posts);
             } else {
@@ -53,7 +53,7 @@ class PostsController {
         const username = req.params.username;
         try {
             const posts = await Posts.getMyPostsByUsername(username);
-            if (posts.length > 0) { // 수정: posts가 배열이므로 길이 확인
+            if (posts.length > 0) {
                 console.log("Posts found: ", posts); // 응답 로그 추가
                 res.json(posts);
             } else {
@@ -71,7 +71,7 @@ class PostsController {
         const username = req.params.username;
         try {
             const post = await Posts.getPostById(username, postId);
-            if (post) { // 수정: posts가 배열이므로 길이 확인
+            if (post) {
                 console.log("Post found: ", post); // 응답 로그 추가
                 res.json(post);
             } else {
@@ -86,8 +86,7 @@ class PostsController {
 
     // 게시물 생성 및 파일 업로드 처리 함수
     static async uploadPost(req, res) {
-
-        var postId
+        var postId;
 
         try {
             // 게시물 생성
@@ -97,18 +96,14 @@ class PostsController {
             }
         } catch (error) {
             console.error('Error creating post:', error);
-            res.status(500).json({ error: 'Internal Server Error' });
+            return res.status(500).json({ error: 'Internal Server Error' });
         }
-        
+
         if (!req.files || req.files.length === 0) {
-            res.status(201).json({ message: `Post created successfully and no files, ${(postId)}`});
-           return     
+            return res.status(201).json({ message: `Post created successfully and no files, ${postId}` });
         }
 
-        PostsController.uploadFiles(req, res, postId);
-        res.status(201).json({ message: `Post and files created successfully, ${(postId)}`});
-
-        return
+        await PostsController.uploadFiles(req, res, postId); // 파일 업로드
     }
 
     // 게시물 생성 로직 분리

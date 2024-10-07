@@ -21,5 +21,20 @@ class Photos {
         const [rows] = await db.query(query, [postId]);
         return rows;
     }
+
+    static async savePhoto(photoData) {
+        try {
+            const query = `
+                INSERT INTO photo (photo_name, photo_directory, post_id)
+                VALUES (?, ?, ?)
+            `;
+            const values = [photoData.photo_name, photoData.photo_directory, photoData.post_id];
+            const [result] = await db.execute(query, values);
+            return { photo_id: result.insertId, ...photoData };
+        } catch (error) {
+            console.error('Error saving photo:', error);
+            throw error;
+        }
+    }
 }
 module.exports = Photos;
