@@ -7,27 +7,27 @@ let messageQueue = [];
 let isProcessingQueue = false;
 
 // 메시지 큐에 메시지 추가 및 처리 시작
-function addToQueue(messageData) {
+function addToQueue(messageData, io) {
     messageQueue.push(messageData); // 메시지를 큐에 추가
-    processQueue(); // 큐 처리 시작
+    processQueue(io); // 큐 처리 시작
 }
 
 // 메시지 큐 처리 함수
-async function processQueue() {
+async function processQueue(io) {
     if (isProcessingQueue) return; // 이미 처리 중이면 중단
 
     isProcessingQueue = true; // 처리 중으로 상태 변경
 
     while (messageQueue.length > 0) {
         const messageData = messageQueue.shift(); // 큐에서 첫 번째 메시지 꺼냄
-        await processMessage(messageData); // 메시지 처리
+        await processMessage(messageData, io); // 메시지 처리 시 io 전달
     }
 
     isProcessingQueue = false; // 처리 완료 후 상태 변경
 }
 
 // 실제 메시지 처리 로직
-async function processMessage({ chatRoomId, username, content }) {
+async function processMessage({ roomIdToSend, username, content }, io) {
     console.log(`메시지 처리 중: ${username} -> ${content}`);
 
     try {
@@ -50,24 +50,91 @@ async function processMessage({ chatRoomId, username, content }) {
             INSERT INTO messages (sender_id, message_text, chat_id, sent_time)
             VALUES (?, ?, ?, NOW())
         `;
-        const [insertResult] = await connection.execute(insertMessageQuery, [senderId, content, chatRoomId]);
+        const [insertResult] = await connection.execute(insertMessageQuery, [senderId, content, roomIdToSend]);
 
         // 생성된 메시지의 ID 가져오기
         const messageId = insertResult.insertId;
 
         // chats 테이블의 last_message_id 업데이트
         const updateChatQuery = 'UPDATE chats SET last_message_id = ? WHERE chat_id = ?';
-        await connection.execute(updateChatQuery, [messageId, chatRoomId]);
+        await connection.execute(updateChatQuery, [messageId, roomIdToSend]);
 
         // 트랜잭션 커밋
         await connection.commit();
-        connection.release();
 
-        console.log(`메시지 저장 완료: ${messageId}`);
+        // 새로 저장된 메시지를 가져오는 쿼리
+        const fetchMessageQuery = `
+            SELECT 
+                m.message_id AS messageId,
+                u.username AS username,
+                u.nickname AS userNickname,
+                u.profile_photo_url AS senderProfilePhotoURL,
+                m.message_text AS messageText,
+                m.sent_time AS sentTime,
+                m.is_read AS isRead,
+                m.chat_id AS chatId
+            FROM messages m
+            JOIN users u ON m.sender_id = u.user_id
+            WHERE m.message_id = ?
+        `;
+        const [messageResults] = await connection.query(fetchMessageQuery, [messageId]);
+
+        // 클라이언트에게 새로 저장된 메시지 전송
+        io.to(roomIdToSend).emit('sendMessageResponse', {
+            success: true,
+            messages: messageResults.map(row => ({
+                messageId: row.messageId,  // 메시지 ID
+                username: row.username,  // 메시지 보낸 사용자 이름
+                userNickname: row.userNickname,  // 보낸 사용자 닉네임
+                senderProfilePhotoURL: row.senderProfilePhotoURL,  // 사용자 프로필 사진 URL
+                messageText: row.messageText,  // 메시지 내용
+                sentTime: row.sentTime,  // 메시지 보낸 시간
+                isRead: row.isRead,  // 메시지 읽음 여부
+                chatId: row.chatId  // 채팅방 ID
+            }))
+        });
+
+        connection.release();
+        console.log(`메시지 저장 및 전송 완료: ${messageId}`);
     } catch (error) {
         console.error('메시지 처리 중 오류 발생:', error);
     }
 }
+
+// 채팅 방 생성 함수
+async function createNewChatRoom(username, partnerUsername, postId) {
+    try {
+        // 사용자 ID를 찾기 위한 쿼리
+        const findUserIdsQuery = `
+            SELECT user_id 
+            FROM users 
+            WHERE username IN (?, ?)
+        `;
+        
+        const [users] = await db.query(findUserIdsQuery, [username, partnerUsername]);
+        
+        if (users.length < 2) {
+            console.error("사용자를 찾을 수 없습니다.");
+            return null; // 사용자 ID를 찾을 수 없을 경우 null 반환
+        }
+        
+        const buyerId = users[0].user_id; // 첫 번째 사용자의 ID (username)
+        const sellerId = users[1].user_id; // 두 번째 사용자의 ID (partnerUsername)
+
+        // 새로운 채팅 방을 생성하는 SQL 쿼리
+        const insertChatQuery = `
+            INSERT INTO chats (seller_id, buyer_id, post_id) 
+            VALUES (?, ?, ?)
+        `;
+        
+        const [result] = await db.query(insertChatQuery, [sellerId, buyerId, postId]);
+        return result.insertId; // 생성된 채팅 방의 ID 반환
+    } catch (error) {
+        console.error("채팅 방 생성 중 오류 발생:", error);
+        return null; // 오류 발생 시 null 반환
+    }
+}
+
 
 //-----------------------------------------------------------------------------------------------------------------------------
 
@@ -78,7 +145,7 @@ const setupSocketEvents = (socket, io) => {
 
         // 필요에 따라 클라이언트에게 추가 메시지를 보낼 수 있음
         socket.emit('response', '서버에서 메시지를 받았습니다.');
-        console.log("메시지를 보냈습니다.");
+        console.log("서버연결 성공 메시지 클라이언트에게 보냈습니다.");
     });
 
     // 소켓 연결 ERROR 처리
@@ -245,29 +312,39 @@ const setupSocketEvents = (socket, io) => {
     });
 
 
-    // 채팅방 조인 이벤트 수신 (사용자가 새로운 채징방 입장시 채팅방 연결)
+    // 채팅방 조인 이벤트 수신 (사용자가 새로운 채징방 입장시 채팅방 연결)?
+    
+    //createchat 소켓 수신을 받아 새로운 chats 레코드를 생성하고, 생성된 chats레코드의 id값을 join하여 클라이언트가 채팅방의 입장하게
+
 
     // 메시지 보내기 이벤트 처리
-    socket.on('sendMessage', (chatRoomId, username, content) => {
-        console.log(`${chatRoomId}, ${username}, ${content}`); // 데이터 로그 추가
-        
-
-        // 메시지 큐에 메시지 추가
-        addToQueue({ chatRoomId, username, content });
-
-        // 클라이언트에게 메시지 전송
-        io.to(chatRoomId).emit('sendMessageResponse', {
-            success: true, // 또는 조건에 따라 true/false 결정
-            messages: [
-                {
-                    username: username,
-                    content: content,
-                    chatRoomId: chatRoomId,
-                    timestamp: new Date(),
+    socket.on('sendMessage', async (roomIdToSend, username, partnerUsername, content, postId) => {
+        // 메시지 유효성 검증
+        if (!content || content.trim() === '') {
+            return socket.emit('messageError', '메시지가 비어있습니다.');
+        }
+    
+        // 채팅방 ID가 유효한지 확인
+        if (roomIdToSend == -1) {
+            try {
+                const newChatRoomId = await createNewChatRoom(username, partnerUsername, postId);
+                if (!newChatRoomId) {
+                    return socket.emit('newChatRoomError', '채팅 방 생성에 실패했습니다.');
                 }
-            ]
-        });
+                roomIdToSend = newChatRoomId;
+                socket.join(roomIdToSend);
+                console.log(`새로운 채팅방 ${roomIdToSend}에 사용자가 참가했습니다.`);
+            } catch (error) {
+                console.error("채팅 방 생성 중 오류 발생:", error);
+                return socket.emit('newChatRoomError', '채팅 방 생성 중 오류가 발생했습니다.');
+            }
+        }
+    
+        // 메시지 큐에 메시지 추가
+        console.log(`전송된 메시지: ${roomIdToSend}, ${username}, ${content}`);
+        addToQueue({ roomIdToSend, username, content }, io);
     });
+
 
 };
 
