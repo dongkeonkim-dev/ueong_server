@@ -3,7 +3,7 @@ const { uploadFiles } = require('../middlewares/multer-middleware');
 const fs = require('fs');
 const path = require('path');
 
-const { HttpError, validate, success } = require('../utils/handlers');
+const { HttpError, validate, success } = require('../utils/validation');
 
 class UserController {
     static async savePhotoAndUpdateUser(req, res, next) {

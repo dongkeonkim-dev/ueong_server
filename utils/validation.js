@@ -5,6 +5,11 @@ class HttpError extends Error {
     }
 }
 
+const isValid = (value) => {
+    return value !== undefined && value !== null;
+};
+
+
 // 유효성 검증 함수
 const validate = (condition, message, status) => {
     if (!condition) {
@@ -20,4 +25,4 @@ const success = (res, data, message) => {
     });
 };
 
-module.exports = { HttpError, validate, success };
+module.exports = { HttpError, validate, success, isValid };
