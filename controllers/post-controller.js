@@ -2,7 +2,8 @@
 const Posts = require('../models/posts');
 const Photos = require('../models/photos');
 const PostSearchHistory = require('../models/post-search-history');
-const { uploadImage } = require('../middlewares/multer-middleware');
+const { uploadFiles } = require('../middlewares/multer-middleware');
+const { isValid, validate } = require('../utils/validation')
 
 class PostsController {
     static async searchPosts(req, res) {
@@ -85,93 +86,48 @@ class PostsController {
     }
 
     // 게시물 생성 및 파일 업로드 처리 함수
-    static async uploadPost(req, res) {
-        var postId;
-
+    static async uploadPost(req, res, next) {
         try {
-            // 게시물 생성
-            postId = await PostsController.createPost(req.body);
-            if (!postId) {
-                return res.status(400).json({ error: 'Failed to create post' });
+            if (req.is('multipart/form-data')) {
+                await PostsController.uploadPostByMPForm(req, res, next);
+            } else if (req.is('application/json')) {
+                await PostsController.createPost(req, res);
+            } else {
+                throw new HttpError('Unsupported Content-Type', 400);
             }
-        } catch (error) {
-            console.error('Error creating post:', error);
-            return res.status(500).json({ error: 'Internal Server Error' });
-        }
-
-        if (!req.files || req.files.length === 0) {
-            return res.status(201).json({ message: `Post created successfully and no files, ${postId}` });
-        }
-
-        await PostsController.uploadFiles(req, res, postId); // 파일 업로드
+        } catch (error) { next(error); }
     }
 
-    // 게시물 생성 로직 분리
-    static async createPost(postData) {
-        const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = postData;
-
-        // 필수 데이터 검증
-        if (
-            title == null || 
-            categoryId == null || 
-            price == null || 
-            writerUsername == null || 
-            emdId == null || 
-            latitude == null || 
-            longitude == null || 
-            locationDetail == null || 
-            text == null
-        ) {
-            throw new Error('Missing required fields');
-        }
-
-        // 게시물 생성
-        const postId = await Posts.createPost({ title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text });
-        return postId;
-    }
-
-    // 파일 업로드 로직 분리
-    static uploadFiles(req, res, postId) {
-        const upload = uploadImage.array('photos', 10); // 최대 10개의 파일 업로드
-
-        upload(req, res, async (err) => {
-            if (err) {
-                console.error('Error uploading files:', err);
-                return res.status(400).json({ error: 'Error uploading files' });
-            }
-
-            try {
-                const photoRecords = await PostsController.savePhotoRecords(req.files, postId);
-                res.status(201).json({ message: 'Post created successfully', postId, photos: photoRecords });
-            } catch (error) {
-                console.error('Error saving photo records:', error);
-                res.status(500).json({ error: 'Internal Server Error' });
-            }
+    static async uploadPostByMPForm(req, res, next) {
+        //멀터 미들웨어 사용
+        uploadFiles(req, res, async (err) => {
+            if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
+            const postId = await PostsController.createPost(req, res);
+            const postPhotoDatas = req.uploadedFiles.images.map((image) => ({
+                photo_name: image,
+                photo_directory: `/uploads/images/${image}`,
+                post_id: postId
+            }));
+            await Photos.savePhotos(postPhotoDatas)
+            res.status(201).json({
+                message: 'Post uploaded successfully',
+                postId,
+                photos: postPhotoDatas
+            });
         });
     }
 
-    // 파일 정보를 DB에 저장하는 로직 분리
-    static async savePhotoRecords(files, postId) {
-        if (!files || files.length === 0) {
-            throw new Error('No files uploaded');
-        }
-
-        const photoRecords = [];
-        for (const file of files) {
-            const photoName = file.filename;
-            const photoDirectory = `/uploads/images/${file.filename}`;
-            const photoRecord = {
-                photo_name: photoName,
-                photo_directory: photoDirectory,
-                post_id: postId
-            };
-
-            // photos 테이블에 각 파일 정보 저장
-            const savedPhoto = await Photos.savePhoto(photoRecord);
-            photoRecords.push(savedPhoto);
-        }
-
-        return photoRecords;
+    // 게시물 생성 로직 분리
+    static async createPost(req, res) {
+        const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = req.body;
+        const requiredFields = {title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text}
+        // 모든 필수 필드 유효성 검사
+        Object.entries(requiredFields).forEach(([key, value]) => {
+            validate(isValid(value), `${key} is required`, 400);
+        });
+        // 게시물 생성
+        const postId = await Posts.createPost({ title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text });
+        return postId;
     }
 }
 

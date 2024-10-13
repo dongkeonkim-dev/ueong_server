@@ -1,5 +1,6 @@
 // Server/Models/Posts.js
 const db = require('../utils/db');
+const DBHelper = require('../utils/DBHelper')
 
 class Posts {
     static async searchPosts(username, village, searchTerm, sortBy) {
@@ -149,33 +150,34 @@ class Posts {
 
     static async createPost(postData) {
         try {
-            const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = postData;
-    
-            // 값 확인을 위한 로그 추가
-            console.log("Post data:", postData);
-    
-            const query = `
-                INSERT INTO post 
-                SET post_title = ?, 
-                    category_id = ?, 
-                    status = ?, 
-                    price = ?, 
-                    writer_id = (SELECT user_id FROM users WHERE users.username = ?), 
-                    emd_id = ?, 
-                    desired_trading_location_latitude = ?, 
-                    desired_trading_location_longitude = ?, 
-                    desired_trading_location_detail = ?, 
-                    text = ?, 
-                    create_at = NOW(),
-                    is_active = ?
-            `;
-    
-            const values = [title, categoryId, "거래대기", price, writerUsername, emdId, latitude, longitude, locationDetail, text, 1];
-    
-            // 값 확인을 위한 로그 추가
-            console.log("Query values:", values);
-    
-            const [result] = await db.execute(query, values);
+            const {
+                title, categoryId, price, writerUsername, emdId,
+                latitude, longitude, locationDetail, text
+            } = postData;
+
+            console.log("Post data:", postData); // 값 확인을 위한 로그
+
+            // 필요한 데이터를 객체로 구성
+            const postBody = {
+                post_title: title,
+                category_id: categoryId,
+                status: "거래대기",
+                price,
+                writer_id: { 
+                    subQuery: "SELECT user_id FROM users WHERE username = ?", 
+                    params: [writerUsername] // 서브쿼리에 사용할 파라미터
+                },
+                emd_id: emdId,
+                desired_trading_location_latitude: latitude,
+                desired_trading_location_longitude: longitude,
+                desired_trading_location_detail: locationDetail,
+                text,
+                create_at: new Date(), // 현재 시간으로 설정
+                is_active: 1
+            };
+
+            // DBHelper의 insert 함수 호출
+            const result = await DBHelper.insert('post', postBody);
     
             // 쿼리 실행 후 결과 확인
             console.log("Insert result:", result);
