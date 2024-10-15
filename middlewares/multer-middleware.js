@@ -1,6 +1,6 @@
 const multer = require('multer');
 const path = require('path');
-const { HttpError } = require('../utils/validation'); // HttpError를 import
+const { HttpError } = require('../utils/check'); // HttpError를 import
 
 // 파일 저장 경로 설정
 const setDestination = (req, file, cb) => {

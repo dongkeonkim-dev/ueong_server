@@ -2,29 +2,27 @@ const Users = require('../models/users');
 const { uploadFiles } = require('../middlewares/multer-middleware');
 const fs = require('fs');
 const path = require('path');
-
-const { HttpError, validate, success } = require('../utils/validation');
+const { HttpError, check } = require('../utils/check')
+const logger = require('../utils/logger')
 
 class UserController {
     static async savePhotoAndUpdateUser(req, res, next) {
-        try {
-            if (req.is('multipart/form-data')) {
-                await UserController.handleMultipartFormData(req, res, next);
-            } else if (req.is('application/json')) {
-                await UserController.handleJsonRequest(req, res, next);
-            } else {
-                throw new HttpError('Unsupported Content-Type', 400);
-            }
-        } catch (error) { next(error); }
+        if (req.is('multipart/form-data')) {
+            await UserController.handleMultipartFormData(req, res, next);
+        } else if (req.is('application/json')) {
+            await UserController.handleJsonRequest(req, res, next);
+        } else {
+            throw new HttpError('Unsupported Content-Type', 400);
+        }
     }
 
-    static async handleMultipartFormData(req, res, next) {
+    static async handleMultipartFormData(req, res) {
         //멀터 미들웨어 사용
         uploadFiles(req, res, async (err) => {
             if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
 
             const user = await Users.getUserByUsername(req.body.username);
-            validate(user, 'User not found', 404); // 사용자 존재 확인
+            check(user).isValid.assert('user')
 
             let profileImageUrl = user.profile_photo_url;
 
@@ -37,52 +35,46 @@ class UserController {
         });
     }
 
-    static async handleJsonRequest(req, res, next) {
-        try {
-            const user = await Users.getUserByUsername(req.body.username);
-            validate(user, 'User not found', 404); // 사용자 존재 확인
+    static async handleJsonRequest(req, res) {
+        const user = await Users.getUserByUsername(req.body.username);
+        check(user).isValid.assert('user')
 
-            await UserController.updateUser(req, res, user.profile_photo_url);
-        } catch (error) { next(error); }
+        await UserController.updateUser(req, res, user.profile_photo_url);
     }
 
-    static async getUserByUsername(req, res, next) {
-        try {
-            const username = req.body.username || req.params.username;
-            validate(username, 'Username is required', 400); // 유효성 검사
+    static async getUserByUsername(req, res) {
+        const username = req.body.username || req.params.username;
+        check(username).isValid.assert('username')
 
-            const user = await Users.getUserByUsername(username);
-            validate(user, 'User not found', 404); // 사용자 존재 확인
+        const user = await Users.getUserByUsername(username);
+        check(user).isValid.assert('user')
 
-            return res.json(user);
-        } catch (error) { next(error); }
+        return res.json(user);
     }
 
     static async deleteOldPhoto(profileImageUrl) {
         if (profileImageUrl) {
             const previousPhotoPath = path.join(__dirname, '..', profileImageUrl);
             fs.unlink(previousPhotoPath, (unlinkErr) => {
-                if (unlinkErr) console.error(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
+                if (unlinkErr) logger(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
             });
         }
     }
 
     static async updateUser(req, res, profileImageUrl) {
-        try {
-            const { username, email, nickname } = req.body;
+        const { username, email, nickname } = req.body;
 
-            const updatedUserData = {
-                username,
-                email,
-                nickname,
-                profileImageUrl
-            };
+        const updatedUserData = {
+            username,
+            email,
+            nickname,
+            profileImageUrl,
+        };
 
-            const updateSuccess = await Users.updateUser(updatedUserData);
-            validate(updateSuccess, 'Failed to update user', 500); // 업데이트 성공 여부 검사
+        const updateSuccess = await Users.updateUser(updatedUserData);
+        check(updateSuccess).boolean.isTrue.assert('updateSuccess', 500);
 
-            success(res, { profileImageUrl }, 'User updated successfully'); // 성공적인 응답 처리
-        } catch (error) { next(error); }
+        res.json({ success: true, data: updateSuccess });
     }
 }
 

@@ -1,8 +1,12 @@
+require('dotenv').config();
+require('express-async-errors');
+
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
+const responseLogger = require('./middlewares/response-logger')
 
 const authRoutes = require('./routes/auth-routes');
 const userRoutes = require('./routes/user-routes');
@@ -32,6 +36,8 @@ app.use((req, res, next) => {
     next(); 
 });
 
+// app.use(responseLogger);
+
 // 라우트 설정
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
@@ -52,8 +58,6 @@ io.on('connection', (socket) => {
     setupSocketEvents(socket, io); // 소켓 이벤트 설정
 });
 
-
-
 // 에러 처리 미들웨어(서버 실행 직전 위치)
 app.use((err, req, res, next) => {
     console.error(err); // 에러를 콘솔에 출력
@@ -62,4 +66,4 @@ app.use((err, req, res, next) => {
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0', () => console.log(`Server running on port ${PORT}`));
