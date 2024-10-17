@@ -1,17 +1,18 @@
 // Server/controller/chat-controller.js
 const Address = require('../models/address');
-const { check } = require('../utils/check')
+const { checkIf } = require('../utils/checkIf')
 
 class AddressController {
     static async getFullAddressById(req, res) {
         const emdId = req.params.emdId;
         const address = await Address.getFullAddressById(emdId);
-        check(address).isFound.assert('address', { emdId })
+        checkIf(address).isFound.elseThrow('address', { emdId })
         res.json(address)
     }
 
     static async searchAddress(req, res){
         const searchTerm = req.query.searchTerm;
+    
         if(searchTerm.trim() == ""){
             res.status(404).json({message:"no searchTerm"})
         }
@@ -35,7 +36,7 @@ class AddressController {
         const { username, emdId } = req.body;
 
         // 유효성 검사
-        if (!check(username).isValid || !check(emdId).isValid) {
+        if (!checkIf(username).isNotNil || !checkIf(emdId).isNotNil) {
             return res.status(400).json({ message: 'Invalid input.' });
         }
 

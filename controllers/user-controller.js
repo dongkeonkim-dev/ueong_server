@@ -2,8 +2,8 @@ const Users = require('../models/users');
 const { uploadFiles } = require('../middlewares/multer-middleware');
 const fs = require('fs');
 const path = require('path');
-const { HttpError, check } = require('../utils/check')
-const logger = require('../utils/logger')
+const { HttpError, checkIf } = require('../utils/checkIf')
+const log = require('../utils/log')
 
 class UserController {
     static async savePhotoAndUpdateUser(req, res, next) {
@@ -22,7 +22,7 @@ class UserController {
             if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
 
             const user = await Users.getUserByUsername(req.body.username);
-            check(user).isValid.assert('user')
+            checkIf(user).isNotNil.elseThrow('user')
 
             let profileImageUrl = user.profile_photo_url;
 
@@ -37,17 +37,17 @@ class UserController {
 
     static async handleJsonRequest(req, res) {
         const user = await Users.getUserByUsername(req.body.username);
-        check(user).isValid.assert('user')
+        checkIf(user).isNotNil.elseThrow('user')
 
         await UserController.updateUser(req, res, user.profile_photo_url);
     }
 
     static async getUserByUsername(req, res) {
         const username = req.body.username || req.params.username;
-        check(username).isValid.assert('username')
+        checkIf(username).isNotNil.elseThrow('username')
 
         const user = await Users.getUserByUsername(username);
-        check(user).isValid.assert('user')
+        checkIf(user).isNotNil.elseThrow('user')
 
         return res.json(user);
     }
@@ -56,7 +56,7 @@ class UserController {
         if (profileImageUrl) {
             const previousPhotoPath = path.join(__dirname, '..', profileImageUrl);
             fs.unlink(previousPhotoPath, (unlinkErr) => {
-                if (unlinkErr) logger(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
+                if (unlinkErr) log(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
             });
         }
     }
@@ -72,7 +72,7 @@ class UserController {
         };
 
         const updateSuccess = await Users.updateUser(updatedUserData);
-        check(updateSuccess).boolean.isTrue.assert('updateSuccess', 500);
+        checkIf(updateSuccess).boolean.isTrue.elseThrow('updateSuccess', 500);
 
         res.json({ success: true, data: updateSuccess });
     }

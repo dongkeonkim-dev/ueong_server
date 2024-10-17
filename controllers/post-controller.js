@@ -3,15 +3,15 @@ const Posts = require('../models/posts');
 const Photos = require('../models/photos');
 const PostSearchHistory = require('../models/post-search-history');
 const { uploadFiles } = require('../middlewares/multer-middleware');
-const { check } = require('../utils/check')
-const logger = require('../utils/logger')
+const { checkIf } = require('../utils/checkIf')
+const log = require('../utils/log')
 
 class PostsController {
     static async searchPosts(req, res) {
         const username = req.params.username;
         const { village, searchTerm, sortBy } = req.query;
         
-        check(searchTerm.trim()).string.length.inRange.assert('검색어',0)
+        //checkIf(searchTerm.trim()).length.inRange.elseThrow('검색어',0)
 
         const histories = await PostSearchHistory.getHistoryByUsername(username);
         const searchTermExists = histories.some(history => history.search_term === searchTerm);
@@ -21,22 +21,18 @@ class PostsController {
             await PostSearchHistory.addHistory(username, searchTerm);
         }
         const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
-        check(posts).array.length.log('포스트')
-        logger(`check(posts).array.length: ${check(posts).array.length}`)
         res.json(posts);
     }
 
     static async getFavoritePostsByUsername(req, res) {
         const username = req.params.username;
         const posts = await Posts.getFavoritePostsByUsername(username);
-        check(posts).array.length.log('좋아요한 포스트')
         res.json(posts);
     }
 
     static async getMyPostsByUsername(req, res) {
         const username = req.params.username;
         const posts = await Posts.getMyPostsByUsername(username);
-        check(posts).array.length.log('내 포스트')
         res.json(posts);
     }
 
@@ -44,7 +40,7 @@ class PostsController {
         const postId = req.params.postId;
         const username = req.params.username;
         const post = await Posts.getPostById(username, postId);
-        check(post).isValid.assert('postId')
+        checkIf(post).isFound.elseThrow('postId', { username })
         res.json(post);
     }
 
@@ -82,7 +78,7 @@ class PostsController {
     static async createPost(req, res) {
         const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = req.body;
         const requiredFields = {title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text}
-        check(requiredFields).areValid.assert()
+        checkIf(requiredFields).areNotNil.elseThrow()
         const postId = await Posts.createPost({ ...requiredFields });
         return postId;
     }
@@ -90,7 +86,7 @@ class PostsController {
     static async changePostStatus(req, res) {
         const { postId, status } = req.body;
         const requiredFields = { postId, status }
-        check(requiredFields).areValid.assert()
+        checkIf(requiredFields).areNotNil.elseThrow()
         result = await Posts.changePostStatus({ ...requiredFields });
         res.json(result)
     }

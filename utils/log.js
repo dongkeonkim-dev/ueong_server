@@ -1,6 +1,4 @@
 // utils/log.js
-
-// Load environment variables (ensure this is done before using the log)
 require('dotenv').config();
 
 /**
@@ -8,19 +6,19 @@ require('dotenv').config();
  * @param {string} message - The message to log.
  * @param {string} level - The level of the log ('info', 'error', etc.).
  */
-const log = (message, level = 'info') => {
+const log = (message, level = '정보') => {
     if (process.env.ENABLE_LOGGING === 'true') {
         const timestamp = new Date().toISOString();
         switch (level) {
-            case 'error':
-                console.error(`[${timestamp}] [ERROR]: ${message}`);
+            case '에러':
+                console.error(`[에러] - ${timestamp}: ${String(message)}`);
                 break;
-            case 'warn':
-                console.warn(`[${timestamp}] [WARN]: ${message}`);
+            case '경고':
+                console.warn(`[경고] - ${timestamp}: ${String(message)}`);
                 break;
-            case 'info':
+            case '정보':
             default:
-                console.log(`[${timestamp}] [INFO]: ${message}`);
+                console.log(`[정보] - ${timestamp}: ${String(message)}`);
                 break;
         }
     }
