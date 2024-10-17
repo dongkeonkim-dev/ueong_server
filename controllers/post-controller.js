@@ -5,14 +5,17 @@ const PostSearchHistory = require('../models/post-search-history');
 const { uploadFiles } = require('../middlewares/multer-middleware');
 const { checkIf } = require('../utils/checkIf')
 const log = require('../utils/log')
+const z = require('zod')
 
 class PostsController {
     static async searchPosts(req, res) {
         const username = req.params.username;
         const { village, searchTerm, sortBy } = req.query;
-        
-        //checkIf(searchTerm.trim()).length.inRange.elseThrow('검색어',0)
 
+        log(checkIf(village).is(z.null()))
+        checkIf(village).is(z.null()).elseThrow()
+        
+        
         const histories = await PostSearchHistory.getHistoryByUsername(username);
         const searchTermExists = histories.some(history => history.search_term === searchTerm);
         if (searchTermExists) {

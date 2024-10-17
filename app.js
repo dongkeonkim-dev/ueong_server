@@ -59,10 +59,8 @@ io.on('connection', (socket) => {
 });
 
 // 에러 처리 미들웨어(서버 실행 직전 위치)
-app.use((err, req, res, next) => {
-    console.error(err); // 에러를 콘솔에 출력
-    res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' }); // 에러 메시지와 상태 코드 응답
-});
+const errorHandler = require('./middlewares/error-handler');
+app.use(errorHandler);
 
 // 서버 실행
 const PORT = process.env.PORT || 3000;
