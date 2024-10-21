@@ -7,7 +7,7 @@ const PostController = require('../controllers/post-controller');
 router.get('/search/username/:username', PostController.searchPosts);
 router.get('/favorite/username/:username', PostController.getFavoritePostsByUsername);
 router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
-router.get('/postId/:postId/username/:username/', PostController.getPostById);
+router.get('/post_id/:post_id/username/:username/', PostController.getPostById);
 router.post('/', PostController.uploadPost);
 router.patch('/change-status', PostController.changePostStatus)
 

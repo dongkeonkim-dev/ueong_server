@@ -1,11 +1,11 @@
 // Server/controller/user-controller.js
-const PostSearchHistory = require('../models/post-search-history');
+const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
 
 class PostSearchHistoryController {
     static async getHistoryByUsername(req, res) {
         const username = req.params.username;
         try {
-            const history = await PostSearchHistory.getHistoryByUsername(username);
+            const history = await PostSearchHistoryRepository.getHistoryByUsername(username);
             if (history) {
                 console.log("History found: ", history); // 응답 로그 추가
                 res.json(history);
@@ -23,7 +23,7 @@ class PostSearchHistoryController {
         const { username, searchTerm } = req.query;
         
         try {
-            const result = await PostSearchHistory.deleteHistory(username, searchTerm);
+            const result = await PostSearchHistoryRepository.deleteHistory(username, searchTerm);
             if (result.affectedRows > 0) {
                 console.log("History deleted: ", searchTerm);
                 res.json({ message: 'History deleted successfully' });

@@ -1,23 +1,37 @@
 // utils/log.js
+
 require('dotenv').config();
 
-/**
- * Logs messages to the console if ENABLE_LOGGING is true.
- * @param {string} message - The message to log.
- * @param {string} level - The level of the log ('info', 'error', etc.).
- */
 const log = (message, level = '정보') => {
-    if (process.env.ENABLE_LOGGING === 'true') {
-        const timestamp = new Date().toISOString();
+    const { NODE_ENV, ENABLE_LOGGING } = process.env;
+    const timestamp = new Date().toISOString();
+
+    if (!ENABLE_LOGGING && NODE_ENV !== 'development') {
+        return; // 로깅이 비활성화된 경우 아무것도 하지 않음
+    }
+
+    if (message instanceof Error) {
+        // 에러 객체인 경우
+        const errorMessage = `${message.stack}`;
+        if (NODE_ENV === 'development') {
+            // 개발 환경에서는 전체 스택 트레이스를 출력
+            console.error(`[${level}] - ${timestamp}: ${errorMessage}`);
+        } else {
+            // 배포 환경에서는 에러 메시지만 출력
+            console.error(`[${level}] - ${timestamp}: ${message.message}`);
+        }
+    } else {
+        // 일반 메시지인 경우
         switch (level) {
             case '에러':
-                console.error(`[에러] - ${timestamp}: ${String(message)}`);
+                console.error(`[${level}] - ${timestamp}: ${message}`);
                 break;
             case '경고':
-                console.warn(`[경고] - ${timestamp}: ${String(message)}`);
+                console.warn(`[${level}] - ${timestamp}: ${message}`);
                 break;
+            case '정보':
             default:
-                console.log(`[정보] - ${timestamp}: ${String(message)}`);
+                console.log(`[${level}] - ${timestamp}: ${message}`);
                 break;
         }
     }

@@ -1,49 +1,65 @@
 // Server/controller/post-controller.js
-const Posts = require('../models/posts');
-const Photos = require('../models/photos');
-const PostSearchHistory = require('../models/post-search-history');
+const PostRepository = require('../repositories/post-repository');
+const PhotoRepository = require('../repositories/photo-repository');
+const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
 const { uploadFiles } = require('../middlewares/multer-middleware');
-const { checkIf } = require('../utils/checkIf')
-const log = require('../utils/log')
-const z = require('zod')
+const { checkIf } = require('../utils/delete/checkIf')
+const { Object, Natural, String, Enum, Double, Binary } = require('../utils/custom-zod-types')
+
+const Post = Object({
+    post_id: Natural,
+    post_title: String.max(255),
+    category_id: Natural,
+    status: Enum(['거래대기', '거래완료']).optional(), // default '거래대기'
+    price: Natural,
+    writer_username: String,
+    emd_id: Natural,
+    desired_trading_location_latitude: Double,
+    desired_trading_location_longitude: Double,
+    desired_trading_location_detail: String,
+    text: String.max(1023),
+    is_active: Binary.optional(), //default 1
+})
+
+const Search = Object ({
+    search_term: String.default(''),
+    sortBy: Enum(['price', 'favorite_count', 'create_at']).default('create_at'),
+})
+
+const User = Object({
+    username: String.max(32),
+})
 
 class PostsController {
     static async searchPosts(req, res) {
-        const username = req.params.username;
-        const { village, searchTerm, sortBy } = req.query;
-
-        log(checkIf(village).is(z.null()))
-        checkIf(village).is(z.null()).elseThrow()
-        
-        
-        const histories = await PostSearchHistory.getHistoryByUsername(username);
-        const searchTermExists = histories.some(history => history.search_term === searchTerm);
+        const params = User.pick({ username: true }).parse(req.params)
+        const input = Search.merge(Post.pick({ emd_id: true })).parse(req.query)
+        const histories = await PostSearchHistoryRepository.getHistoryByUsername(params.username);
+        const searchTermExists = histories.some(history => history.search_term === input.search_term);
         if (searchTermExists) {
-            await PostSearchHistory.updateHistory(username, searchTerm);
+            await PostSearchHistoryRepository.updateHistory(params.username, input.search_term);
         } else {
-            await PostSearchHistory.addHistory(username, searchTerm);
+            await PostSearchHistoryRepository.addHistory(params.username, input.search_term);
         }
-        const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
+        const posts = await PostRepository.searchPosts(params.username, input);
         res.json(posts);
     }
 
     static async getFavoritePostsByUsername(req, res) {
-        const username = req.params.username;
-        const posts = await Posts.getFavoritePostsByUsername(username);
+        const params = User.pick({ username: true }).parse(req.params)
+        const posts = await PostRepository.getFavoritePostsByUsername(params.username);
         res.json(posts);
     }
 
     static async getMyPostsByUsername(req, res) {
-        const username = req.params.username;
-        const posts = await Posts.getMyPostsByUsername(username);
+        const params = User.pick({ username: true }).parse(req.params)
+        const posts = await PostRepository.getMyPostsByUsername(params.username);
         res.json(posts);
     }
 
     static async getPostById(req, res) {
-        const postId = req.params.postId;
-        const username = req.params.username;
-        const post = await Posts.getPostById(username, postId);
-        checkIf(post).isFound.elseThrow('postId', { username })
+        const params = Post.pick({ post_id: true }).merge(User.pick({ username: true })).parse(req.params)
+        const post = await PostRepository.getPostById(params.username, params.post_id);
         res.json(post);
     }
 
@@ -68,21 +84,15 @@ class PostsController {
                 photo_directory: `/uploads/images/${image}`,
                 post_id: postId
             }));
-            await Photos.savePhotos(postPhotoDatas)
-            res.status(201).json({
-                message: 'Post uploaded successfully',
-                postId,
-                photos: postPhotoDatas
-            });
+            await PhotoRepository.savePhotos(postPhotoDatas)
+            res.status(201).json(postId);
         });
     }
 
     // 게시물 생성 로직 분리
     static async createPost(req, res) {
-        const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = req.body;
-        const requiredFields = {title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text}
-        checkIf(requiredFields).areNotNil.elseThrow()
-        const postId = await Posts.createPost({ ...requiredFields });
+        const input = Post.omit({ post_id: true }).parse(req.body)
+        const postId = await PostRepository.createPost(input);
         return postId;
     }
 
@@ -90,7 +100,7 @@ class PostsController {
         const { postId, status } = req.body;
         const requiredFields = { postId, status }
         checkIf(requiredFields).areNotNil.elseThrow()
-        result = await Posts.changePostStatus({ ...requiredFields });
+        result = await PostRepository.changePostStatus({ ...requiredFields });
         res.json(result)
     }
 }

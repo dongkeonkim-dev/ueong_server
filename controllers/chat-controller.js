@@ -1,11 +1,11 @@
 // Server/controller/chat-controller.js
-const Chats = require('../models/chats');
+const ChatRepository = require('../repositories/chat-repository');
 
 class ChatController {
     static async getChatsByUsername(req, res) {
         const username = req.params.username;
         try {
-            const chats = await Chats.getChatsByUsername(username);
+            const chats = await ChatRepository.getChatsByUsername(username);
             if (chats) {
                 console.log("Chats found: ", chats); // 응답 로그 추가
                 res.json(chats);

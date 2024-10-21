@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('./knex');
 
 // 메시지 큐 선언 (FIFO 방식)
 let messageQueue = [];

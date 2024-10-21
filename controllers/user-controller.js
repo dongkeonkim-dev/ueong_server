@@ -1,8 +1,8 @@
-const Users = require('../models/users');
+const UserRepository = require('../repositories/user-repository');
 const { uploadFiles } = require('../middlewares/multer-middleware');
 const fs = require('fs');
 const path = require('path');
-const { HttpError, checkIf } = require('../utils/checkIf')
+const { HttpError, checkIf } = require('../utils/delete/checkIf')
 const log = require('../utils/log')
 
 class UserController {
@@ -21,7 +21,7 @@ class UserController {
         uploadFiles(req, res, async (err) => {
             if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
 
-            const user = await Users.getUserByUsername(req.body.username);
+            const user = await UserRepository.getUserByUsername(req.body.username);
             checkIf(user).isNotNil.elseThrow('user')
 
             let profileImageUrl = user.profile_photo_url;
@@ -36,7 +36,7 @@ class UserController {
     }
 
     static async handleJsonRequest(req, res) {
-        const user = await Users.getUserByUsername(req.body.username);
+        const user = await UserRepository.getUserByUsername(req.body.username);
         checkIf(user).isNotNil.elseThrow('user')
 
         await UserController.updateUser(req, res, user.profile_photo_url);
@@ -46,7 +46,7 @@ class UserController {
         const username = req.body.username || req.params.username;
         checkIf(username).isNotNil.elseThrow('username')
 
-        const user = await Users.getUserByUsername(username);
+        const user = await UserRepository.getUserByUsername(username);
         checkIf(user).isNotNil.elseThrow('user')
 
         return res.json(user);
@@ -71,7 +71,7 @@ class UserController {
             profileImageUrl,
         };
 
-        const updateSuccess = await Users.updateUser(updatedUserData);
+        const updateSuccess = await UserRepository.updateUser(updatedUserData);
         checkIf(updateSuccess).boolean.isTrue.elseThrow('updateSuccess', 500);
 
         res.json({ success: true, data: updateSuccess });
