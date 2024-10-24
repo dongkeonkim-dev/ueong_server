@@ -45,8 +45,8 @@ const uploadFiles = (req, res, next) => {
 
         // 파일 이름을 다음 미들웨어로 전달
         req.uploadedFiles = {
-            images: uploadedImages.map(file => file.filename), // 배열로 변환
-            model: uploadedModel ? uploadedModel.filename : null
+            image_names: uploadedImages.map(file => file.filename), // 배열로 변환
+            model_name: uploadedModel ? uploadedModel.filename : null
         };
 
         next();

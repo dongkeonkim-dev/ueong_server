@@ -1,162 +1,88 @@
 // Server/Models/Posts.js
-const db = require('../utils/knex');
-const DBHelper = require('../utils/delete/DBHelper')
+const db = require('../utils/db/knex');
+const { validCreate, validUpdate, validGet, validGetExist } = require('../utils/validation/custom-zod-types');
+const { Post, Writer, Favorite, FavoriteCount, User } = require('../utils/db/models');
 
 class PostRepository {
-    static async searchPosts(username, input) {
-        const { emd_id, search_term, sort_by } = input
-        console.log(input)
-        let query = `
-        SELECT post.*, 
-        writer.username AS writer_username, 
-        CASE 
-            WHEN favorite_count_table.favorite_count IS NULL THEN 0 
-            ELSE favorite_count_table.favorite_count 
-        END AS favorite_count,
-        CASE 
-            WHEN favorite.post_id IS NOT NULL THEN TRUE 
-            ELSE FALSE 
-        END AS is_favorite
-        FROM post
-        LEFT JOIN users AS writer
-            ON post.writer_id = writer.user_id
-        LEFT JOIN favorite 
-            ON favorite.post_id = post.post_id 
-            AND favorite.user_id = (
-                SELECT user_id 
-                FROM users
-                WHERE username = ?
-            )
-         LEFT JOIN (
-            SELECT post_id, COUNT(*) AS favorite_count
-            FROM favorite
-            GROUP BY post_id
-       ) AS favorite_count_table
-       ON post.post_id = favorite_count_table.post_id
-        WHERE (post.post_title LIKE ? OR post.text LIKE ?)
-        AND post.emd_id = ?
-        `;
-        
-        // 정렬 기준 추가
-        if (sort_by === "price") {
-            query += " ORDER BY price ASC;";
-        } else if (sort_by === "favorite_count") {
-            query += " ORDER BY favorite_count DESC;";
-        } else {
-            query += " ORDER BY create_at DESC;"; // 기본값으로 정렬
-        }
-    
-        const [rows] = await db.raw(query, [username, `%${search_term}%`, `%${search_term}%`, emd_id]);
-        return rows;
-    }
-    
+  // 게시물 기본 형식
+  static postQuery(username) {
+    return db(Post.table)
+      .select(Post.all)
+      .select(Writer.writer_username)
+      .select(Favorite.is_favorite)
+      .select(FavoriteCount.favorite_count)
+      .leftJoin(Writer.table, Post.writer_id, Writer.user_id)
+      .leftJoin(Favorite.table, function(){
+        this.on(Post.post_id, Favorite.post_id)
+          .andOn(Favorite.user_id, User.user_id(username))
+      })
+      .leftJoin(FavoriteCount.table, Post.post_id, FavoriteCount.post_id);
+  }
 
-    static async getFavoritePostsByUsername(username){
-        const query = `
-        SELECT post.*, 
-            1 AS is_favorite, 
-            writer.username AS writer_username,
-            CASE 
-                WHEN favorite_count_table.favorite_count IS NULL THEN 0 
-                ELSE favorite_count_table.favorite_count 
-            END AS favorite_count
-        FROM favorite
-        LEFT JOIN post ON favorite.post_id = post.post_id
-        LEFT JOIN users AS writer ON post.writer_id = writer.user_id
-        LEFT JOIN (
-            SELECT post_id, COUNT(*) AS favorite_count
-            FROM favorite
-            GROUP BY post_id
-       ) AS favorite_count_table
-       ON post.post_id = favorite_count_table.post_id
-        WHERE favorite.user_id = (
-            SELECT user_id 
-            FROM users
-            WHERE username = ?
-        );
-        `;
-        const [rows] = await db.raw(query, [username]);
-        return rows;
-    }
+  static async searchPosts(username, input) {
 
-    static async getMyPostsByUsername(username){
+    const query =
+      this.postQuery(username)
+      // 검색 조건
+      .where(function () {
+        this.where(Post.post_title, 'like', `%${input.search_term}%`)
+          .orWhere(Post.text, 'like', `%${input.search_term}%`);
+      })
+      .andWhere(Post.emd_id, input.emd_id)
+      .andWhere(Post.is_active, 1)
+      .andWhere(Post.status, '거래대기')
+      // 정렬
+      .orderBy(
+        input.sort_by,
+        input.sort_by === 'price' ? 'asc' : 'desc'
+      );
+    return validGet(await query);
+  }s
 
-        const favorite_count_table = `
-            (SELECT post_id, COUNT(*) AS favorite_count
-            FROM favorite
-            GROUP BY post_id) AS favorite_count_table
-        `;
+  static async getFavoritePostsByUsername(username) {
+    const query =
+      this.postQuery(username)
+      .where(Favorite.user_id, User.user_id(username))
+      .andWhere(Post.is_active, 1)
+      .andWhere(Post.status, '거래대기')
+      .orderBy(Post.create_at, 'desc');
 
-        const user_id = `
-            (SELECT user_id 
-            FROM users
-            WHERE username = ?)
-        `;
 
-        const query = `
-        SELECT *, 
-            post.post_id,writer.username AS writer_username,
-            IF(favorite.post_id IS NOT NULL, TRUE, FALSE) as is_favorite,
-            COALESCE(favorite_count_table.favorite_count, 0) as favorite_count
-        FROM post
-        LEFT JOIN users AS writer
-            ON post.writer_id = writer.user_id
-        LEFT JOIN favorite 
-            ON favorite.post_id = post.post_id 
-            AND favorite.user_id = 
-        LEFT JOIN ${favorite_count_table}
-            ON post.post_id = favorite_count_table.post_id
-        WHERE post.writer_id = ${user_id};
-        `;
-        const [rows] = await db.raw(query, [username, username]);
-        return rows;
-    }
+    return validGet(await query);
+  }
 
-    static async getPostById(username, post_id){
+  static async getMyPostsByUsername(username) {
+    const query =
+      this.postQuery(username)
+      .where(Writer.username, username)
+      .andWhere(Post.is_active, 1)
+      //거래대기, 거래완료 전부 조회
+      .orderBy(Post.create_at, 'desc');
 
-        const favorite_count_table = `
-            SELECT post_id, COUNT(*) AS favorite_count
-            FROM favorite
-            GROUP BY post_id
-        `
+    return validGet(await query);
+  }
 
-        const query = `
-        SELECT *, post.post_id AS post_id, writer.username AS writer_username,
-            IF(favorite.post_id IS NOT NULL, TRUE, FALSE) as is_favorite,
-            COALESCE(favorite_count_table.favorite_count, 0) as favorite_count
-        FROM post
-        LEFT JOIN users AS writer
-            ON post.writer_id = writer.user_id
-        LEFT JOIN favorite 
-            ON favorite.post_id = post.post_id 
-            AND favorite.user_id = (
-                SELECT user_id 
-                FROM users
-                WHERE username = ?
-            )
-        LEFT JOIN (${favorite_count_table}) AS favorite_count_table
-            ON post.post_id = favorite_count_table.post_id
-        WHERE post.post_id = ?
-        `;
-        const [rows] = await db.raw(query, [username, post_id]);
-        return rows[0];
-    }
+  static async getPostById(username, post_id) {
+    const query =
+      this.postQuery(username)
+      .where(Post.post_id, post_id)
+      .andWhere(Post.is_active, 1)
+      //거래대기, 거래완료 전부 조회
+    return validGetExist(await query).at(0);
+  }
 
-    static async createPost(input) {
-        const { writer_username, ...otherFields } = input;
-        const postData = {
-            ...otherFields,  // 나머지 필드 통과
-            writer_id: db('users').select('user_id').where('username', writer_username).first(), // username => id
-            create_at: new Date()  // create_at 설정
-        };
-        const [postId] = await db('post').insert(postData);
-        return postId;
-    }
-    
-    static async updatePost(postData) {
-        const {postId, ...updateData } = postData
-        result = await DBHelper.patch('post', updateData, { postId })
-    }
+  static async createPost(input) {
+    input.writer_id = User.user_id(input.writer_username);
+    delete input.writer_username;
+    const query = db(Post.table).insert(input);
+    return validCreate(await query).at(0);
+  }
+
+  static async updatePost(input) {
+    const { post_id, ...updateFields } = input;
+    const query = db(Post.table).where(Post.post_id, post_id).update(updateFields);
+    return validUpdate(await query);
+  }
 }
 
 module.exports = PostRepository;

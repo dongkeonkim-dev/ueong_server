@@ -1,0 +1,26 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# 최상위 설정
+root = true
+
+# 모든 파일에 적용되는 기본 설정
+[*]
+# 들여쓰기를 스페이스로 설정
+indent_style = space
+# 들여쓰기 크기를 2칸으로 설정
+indent_size = 2
+# 파일 끝에 줄바꿈 추가
+end_of_line = lf
+# 파일의 마지막에 빈 줄 추가
+insert_final_newline = true
+# 탭 사용 시 2칸으로 설정
+tab_width = 2
+# 문자 인코딩을 UTF-8로 설정
+charset = utf-8
+# 불필요한 스페이스 제거
+trim_trailing_whitespace = true
+
+# JavaScript 파일에 대한 별도의 설정 (선택 사항)
+[*.js]
+# eslint 규칙에 따라 자동 포매팅을 원할 경우
+# insert_final_newline = true

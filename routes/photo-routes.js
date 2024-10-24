@@ -5,5 +5,5 @@ const PhotoController = require('../controllers/photo-controller');
 const { authenticate } = require('../middlewares/auth-middleware');
 
 router.get('/postId/:postId', PhotoController.getPhotosByPostId);
-
+router.get('/postIds', PhotoController.getPhotosByPostIds);
 module.exports = router;

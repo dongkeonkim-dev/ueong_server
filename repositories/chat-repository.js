@@ -1,18 +1,18 @@
 // Server/Models/Chats.js
-const db = require('../utils/knex');
+const db = require('../utils/db/knex');
 
 class Chats {
     static async getChatsByUsername(username) {
         const query =
         `
-        SELECT 
+        SELECT
             u.username AS user_username,
             u.nickname AS user_nickname,
-            CASE 
+            CASE
                 WHEN u.user_id = c.seller_id THEN r.nickname  -- 상대방의 닉네임 (구매자)
                 ELSE s.nickname  -- 상대방의 닉네임 (판매자)
             END AS partner_nickname,
-            CASE 
+            CASE
                 WHEN u.user_id = c.seller_id THEN r.profile_photo_url  -- 상대방의 프로필 사진 (구매자)
                 ELSE s.profile_photo_url  -- 상대방의 프로필 사진 (판매자)
             END AS partner_profile_photo_url,  -- 상대방의 프로필 사진
@@ -34,7 +34,7 @@ class Chats {
         LEFT JOIN users s ON c.seller_id = s.user_id  -- 판매자
         LEFT JOIN users r ON c.buyer_id = r.user_id   -- 구매자
         WHERE u.username = ?;  -- 여기에 사용자의 username을 입력
-        `; 
+        `;
         const [rows] = await db.raw(query, [username]);
         return rows;
     }

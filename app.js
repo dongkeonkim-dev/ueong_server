@@ -2,13 +2,13 @@ require('dotenv').config();
 require('express-async-errors');
 
 const express = require('express');
-const knex = require('./utils/knex');
+const knex = require('./utils/db/knex');
 const cors = require('cors');
 const path = require('path');
 const http = require('http');
 const socketIo = require('socket.io');
 //SocketEvents
-const setupSocketEvents = require('./utils/setupSocketEvents'); 
+const setupSocketEvents = require('./utils/setupSocketEvents');
 
 
 // 커스텀 미들웨어

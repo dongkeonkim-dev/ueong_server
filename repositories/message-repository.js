@@ -1,10 +1,10 @@
 // Server/Models/Chats.js
-const db = require('../utils/knex');
+const db = require('../utils/db/knex');
 
 class Messages {
     static async getMessagesByChatter(username, chatter) {
         const query = `
-            SELECT *, 
+            SELECT *,
                 sender.username AS sender_username, sender.nickname AS sender_nickname,
                 receiver.username AS receiver_username, receiver.nickname AS receiver_nickname
             FROM messages

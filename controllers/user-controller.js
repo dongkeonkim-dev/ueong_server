@@ -1,81 +1,56 @@
 const UserRepository = require('../repositories/user-repository');
 const { uploadFiles } = require('../middlewares/multer-middleware');
-const fs = require('fs');
-const path = require('path');
-const { HttpError, checkIf } = require('../utils/delete/checkIf')
-const log = require('../utils/log')
+const { HttpError } = require('../utils/custom-error')
+const { User } = require('../utils/validation/schemas')
+const { deleteFile } = require('../utils/file-manager');
+const { IMAGE_PATH } = require('../config/constants');
+const { partialExcept } = require('../utils/validation/utils');
+const { log } = require('../utils/log');
+
 
 class UserController {
-    static async savePhotoAndUpdateUser(req, res, next) {
-        if (req.is('multipart/form-data')) {
-            await UserController.handleMultipartFormData(req, res, next);
-        } else if (req.is('application/json')) {
-            await UserController.handleJsonRequest(req, res, next);
-        } else {
-            throw new HttpError('Unsupported Content-Type', 400);
-        }
+  static async updateUser(req, res, next) {
+    if (req.is('multipart/form-data')) {
+      await UserController.updateUserWithPhoto(req, res, next);
+    } else if (req.is('application/json')) {
+      await UserController.updateUserWithoutPhoto(req, res);
+    } else {
+      throw new HttpError('Unsupported Content-Type', 400);
     }
+  }
 
-    static async handleMultipartFormData(req, res) {
-        //멀터 미들웨어 사용
-        uploadFiles(req, res, async (err) => {
-            if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
+  static async updateUserWithPhoto(req, res, next) {
+    //멀터 미들웨어 사용
+    uploadFiles(req, res, async (err) => {
+      if (err) return next(new HttpError('File upload failed', 500));
+      // 유저 정보 조회
+      const input = partialExcept(User, { username: true }).parse(req.body);
+      const storedUser = await UserRepository.getUserByUsername(input.username);
+      input.profile_photo_url = storedUser.profile_photo_url;
+      // 이미지 업로드 시 기존 이미지 삭제
+      if (req.uploadedFiles.image_names?.length) {
+        deleteFile(storedUser.profile_photo_url);
+        input.profile_photo_url = `${IMAGE_PATH}${req.uploadedFiles.image_names[0]}`;
+      }
+      // 유저 정보 업데이트
+      const affectedRows = await UserRepository.updateUser(input);
+      return res.json({ affectedRows });
+    });
+  }
 
-            const user = await UserRepository.getUserByUsername(req.body.username);
-            checkIf(user).isNotNil.elseThrow('user')
+  static async updateUserWithoutPhoto(req, res) {
+    const input = partialExcept(User, { username: true })
+      .omit({ profile_photo_url: true }).parse(req.body);
+    const affectedRows = await UserRepository.updateUser(input);
+    return res.json({ affectedRows });
+  }
 
-            let profileImageUrl = user.profile_photo_url;
-
-            if (req.uploadedFiles.images?.length) {
-                profileImageUrl = `/uploads/images/${req.uploadedFiles.images[0]}`;
-                await UserController.deleteOldPhoto(user.profile_photo_url);
-            }
-
-            await UserController.updateUser(req, res, profileImageUrl);
-        });
-    }
-
-    static async handleJsonRequest(req, res) {
-        const user = await UserRepository.getUserByUsername(req.body.username);
-        checkIf(user).isNotNil.elseThrow('user')
-
-        await UserController.updateUser(req, res, user.profile_photo_url);
-    }
-
-    static async getUserByUsername(req, res) {
-        const username = req.body.username || req.params.username;
-        checkIf(username).isNotNil.elseThrow('username')
-
-        const user = await UserRepository.getUserByUsername(username);
-        checkIf(user).isNotNil.elseThrow('user')
-
-        return res.json(user);
-    }
-
-    static async deleteOldPhoto(profileImageUrl) {
-        if (profileImageUrl) {
-            const previousPhotoPath = path.join(__dirname, '..', profileImageUrl);
-            fs.unlink(previousPhotoPath, (unlinkErr) => {
-                if (unlinkErr) log(`Failed to delete old photo at ${previousPhotoPath}: ${unlinkErr.message}`);
-            });
-        }
-    }
-
-    static async updateUser(req, res, profileImageUrl) {
-        const { username, email, nickname } = req.body;
-
-        const updatedUserData = {
-            username,
-            email,
-            nickname,
-            profileImageUrl,
-        };
-
-        const updateSuccess = await UserRepository.updateUser(updatedUserData);
-        checkIf(updateSuccess).boolean.isTrue.elseThrow('updateSuccess', 500);
-
-        res.json({ success: true, data: updateSuccess });
-    }
+  static async getUserByUsername(req, res) {
+    const bodyExist = req.body.username ? true : false;
+    const input = User.pick({ username: true }).parse(bodyExist ? req.body : req.params);
+    const user = await UserRepository.getUserByUsername(input.username);
+    return res.json(user);
+  }
 }
 
 module.exports = UserController;

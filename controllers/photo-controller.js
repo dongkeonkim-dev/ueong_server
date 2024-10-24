@@ -2,22 +2,17 @@
 const PhotoRepository = require('../repositories/photo-repository');
 
 class PhotoController {
-    static async getPhotosByPostId(req, res) {
-        const postId = req.params.postId;
+  static async getPhotosByPostId(req, res) {
+    const postId = req.params.postId;
+      const photos = await PhotoRepository.getPhotosByPostId(postId);
+      res.json(photos);
+  }
 
-        try {
-            const photos = await PhotoRepository.getPhotosByPostId(postId);
-            console.log(`Fetched ${photos.length} photos for postId: ${postId}`);
-
-            // 사진이 없을 경우에도 빈 배열 반환
-            res.json(photos);
-        } catch (err) {
-            console.error("Error searching Photo: ", err);
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    }
-
-
+  static async getPhotosByPostIds(req, res) {
+    const postIds = req.query.postIds;
+    const photos = await PhotoRepository.getPhotosByPostIds(postIds);
+    res.json(photos);
+  }
 }
 
 module.exports = PhotoController;

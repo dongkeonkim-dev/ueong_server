@@ -1,49 +1,36 @@
 // Server/Models/Address.js
-const db = require('../utils/knex');
+const db = require('../utils/db/knex');
+const { Emd, Sgg, Sd, Address } = require('../utils/db/models');
+const { validGet } = require('../utils/validation/custom-zod-types');
+const { log } = require('../utils/log');
 
-class Address {
-    static async getFullAddressById(emdId) {
-        const query = `
-            SELECT emd.emd_id AS id,
-                CONCAT (sd.sd_name, " ", sgg.sgg_name, " ", emd.emd_name) AS Address
-            FROM address_emd AS emd
-            LEFT JOIN address_sgg AS sgg
-                ON emd.sgg_id = sgg.sgg_id
-            LEFT JOIN address_sd AS sd 
-                ON sd.sd_id = sgg.sd_id
-            WHERE emd.emd_id = ?
-        `; 
-        const [rows] = await db.raw(query, [emdId]);
-        return rows[0];
-    }
+class AddressRepository {
+  static async getFullAddressById(emd_id) {
+    const query = db(Emd.table)
+      .select(Emd.emd_id)
+      .select(Address.fullAddress)
+      .leftJoin(Sgg.table, Emd.sgg_id, Sgg.sgg_id)
+      .leftJoin(Sd.table, Sgg.sd_id, Sd.sd_id)
+      .where(Emd.emd_id, emd_id);
+    return validGet(await query).at(0);
+  }
 
-    static async searchAddress(searchTerm) {
-        const query = `
-        SELECT emd_id AS id,
-            CONCAT (sd.sd_name, " ", sgg.sgg_name, " ", emd.emd_name) AS Address
-        FROM address_emd AS emd
-        LEFT JOIN address_sgg AS sgg
-            ON emd.sgg_id = sgg.sgg_id
-        LEFT JOIN address_sd AS sd 
-            ON sd.sd_id = sgg.sd_id
-        WHERE CONCAT(sd.sd_name, " ", sgg.sgg_name, " ", emd.emd_name) LIKE ?
-        `
-        console.log(query);
-        console.log(searchTerm);
-        const [rows] = await db.raw(query, [`%${searchTerm}%`]);
-        return rows;
-    }
+  static async searchAddress(searchTerm) {
+    const query = db(Emd.table)
+      .select(Emd.emd_id)
+      .select(Address.fullAddress)
+      .leftJoin(Sgg.table, Emd.sgg_id, Sgg.sgg_id)
+      .leftJoin(Sd.table, Sgg.sd_id, Sd.sd_id)
+      .where(Address.fullAddress, `LIKE`, `%${searchTerm}%`);
+    return validGet(await query);
+  }
 
-    static async getEmd(emdId) {
-        const query = `
-            SELECT *
-            FROM address_emd
-            WHERE emd_id = ?
-        `;
-
-        const [rows] = await db.raw(query, [emdId]);
-        return rows[0];
-    }
+  static async getEmd(emd_id) {
+    const query = db(Emd.table)
+      .select(Emd.all)
+      .where(Emd.emd_id, emd_id);
+    return validGet(await query).at(0);
+  }
 }
 
-module.exports = Address;
+module.exports = AddressRepository;

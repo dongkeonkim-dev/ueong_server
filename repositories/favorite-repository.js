@@ -1,33 +1,21 @@
 // Server/Models/Favorite.js
-const db = require('../utils/knex');
+const db = require('../utils/db/knex');
+const { Favorite } = require('../utils/db/models');
+const { validDelete } = require('../utils/validation/custom-zod-types');
+const { usernameToId } = require('../utils/helper');
 
-class Favorite {
-    static async insertFavorite(postId, username) {
-        const query = `
-            INSERT INTO favorite (post_id, user_id)
-            VALUES (?, (
-                SELECT user_id 
-                FROM users
-                WHERE username = ?
-            ))
-        `; 
-        const [result] = await db.raw(query, [postId, username]);
-        return result;
-    }
+class FavoriteRepository {
+  static async insertFavorite(input) {
+    input = usernameToId(input);
+    await db(Favorite.table).insert(input);
+    //pk X -> 삽입 반환값 X
+  }
 
-    // 좋아요 제거 메서드
-    static async deleteFavorite(postId, username) {
-        const query = `
-            DELETE FROM favorite
-            WHERE post_id = ? AND user_id = (
-                SELECT user_id 
-                FROM users
-                WHERE username = ?
-            )
-        `; 
-        const [result] = await db.raw(query, [postId, username]);
-        return result;
-    }
+  static async deleteFavorite(input) {
+    input = usernameToId(input);
+    const query = db(Favorite.table).where(input).delete();
+    return validDelete(await query);
+  }
 }
 
-module.exports = Favorite;
+module.exports = FavoriteRepository;
