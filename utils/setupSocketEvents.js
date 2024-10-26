@@ -135,7 +135,19 @@ async function createNewChatRoom(username, partnerUsername, postId) {
     }
 }
 
+// 사용자 이름에 해당하는 소켓 객체를 반환하는 비동기 함수
+async function getSocketByUsername(username) {
+    const socketId = users[username]; // 사용자 이름으로 소켓 ID를 찾음
+    if (socketId) {
+        // Promise.resolve()를 사용하여 비동기적으로 반환
+        return Promise.resolve(io.sockets.sockets.get(socketId)); // 해당 소켓 ID를 기반으로 소켓 객체를 반환
+    }
+    return Promise.resolve(null); // 소켓 ID가 없으면 null 반환
+}
 
+
+// 사용자와 소켓 ID를 저장하는 객체
+const users = {};
 //-----------------------------------------------------------------------------------------------------------------------------
 
 const setupSocketEvents = (socket, io) => {
@@ -151,6 +163,24 @@ const setupSocketEvents = (socket, io) => {
     // 소켓 연결 ERROR 처리
     socket.on('error', (error) => {
         console.log(`소켓 ${socket.id}에서 오류 발생: ${error}`);
+    });
+
+    // 사용자가 연결될 때 사용자 이름과 소켓 ID를 매핑하여 저장
+    socket.on('registerUser', (username) => {
+        users[username] = socket.id; // 사용자 이름과 소켓 ID를 매핑
+        console.log(`사용자 ${username}가 소켓 ID ${socket.id}와 연결되었습니다.`);
+    });
+
+    // 소켓 연결 해제 시
+    socket.on('disconnect', () => {
+        // 연결된 사용자를 소켓 ID 기반으로 제거
+        for (const username in users) {
+            if (users[username] === socket.id) {
+                console.log(`사용자 ${username}가 연결을 끊었습니다.`);
+                delete users[username];
+                break;
+            }
+        }
     });
 
     // 채팅방 존재 확인
@@ -311,12 +341,6 @@ const setupSocketEvents = (socket, io) => {
         });
     });
 
-
-    // 채팅방 조인 이벤트 수신 (사용자가 새로운 채징방 입장시 채팅방 연결)?
-
-    //createchat 소켓 수신을 받아 새로운 chats 레코드를 생성하고, 생성된 chats레코드의 id값을 join하여 클라이언트가 채팅방의 입장하게
-
-
     // 메시지 보내기 이벤트 처리
     socket.on('sendMessage', async (roomIdToSend, username, partnerUsername, content, postId) => {
         // 메시지 유효성 검증
@@ -331,9 +355,20 @@ const setupSocketEvents = (socket, io) => {
                 if (!newChatRoomId) {
                     return socket.emit('newChatRoomError', '채팅 방 생성에 실패했습니다.');
                 }
+
                 roomIdToSend = newChatRoomId;
                 socket.join(roomIdToSend);
                 console.log(`새로운 채팅방 ${roomIdToSend}에 사용자가 참가했습니다.`);
+
+                const partnerSocket = await getSocketByUsername(partnerUsername); // 상대방의 소켓을 가져오는 비동기 함수
+                if (partnerSocket) {
+                    partnerSocket.join(roomIdToSend);
+                    console.log(`${partnerUsername}도 새로운 채팅방 ${roomIdToSend}에 참가했습니다.`);
+                }
+                else {
+                    console.log(`${partnerUsername}(상대방)님은 현재 앱 접속중이 아닙니다.`);
+                }
+                
             } catch (error) {
                 console.error("채팅 방 생성 중 오류 발생:", error);
                 return socket.emit('newChatRoomError', '채팅 방 생성 중 오류가 발생했습니다.');

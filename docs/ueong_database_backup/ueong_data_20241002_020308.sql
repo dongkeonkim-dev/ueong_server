@@ -69,12 +69,12 @@ UNLOCK TABLES;
 -- Dumping data for table `chats`
 --
 
--- LOCK TABLES `chats` WRITE;
--- /*!40000 ALTER TABLE `chats` DISABLE KEYS */;
--- /*(chat_id, seller_id, buyer_id, last_message_id, post_id)*/;
--- INSERT INTO `chats` VALUES (1,1,2,2,1),(2,1,2,3,2),(3,1,3,5,3),(4,2,1,6,63);
--- /*!40000 ALTER TABLE `chats` ENABLE KEYS */;
--- UNLOCK TABLES;
+LOCK TABLES `chats` WRITE;
+/*!40000 ALTER TABLE `chats` DISABLE KEYS */;
+/*(chat_id, seller_id, buyer_id, last_message_id, post_id)*/;
+INSERT INTO `chats` VALUES (1,1,2,2,1),(2,2,1,4,2),(3,1,3,5,3),(4,2,1,6,4);
+/*!40000 ALTER TABLE `chats` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Dumping data for table `favorite`
@@ -90,17 +90,17 @@ UNLOCK TABLES;
 -- Dumping data for table `messages`
 --
 
--- LOCK TABLES `messages` WRITE;
--- /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
--- INSERT INTO `messages` VALUES 
--- (1,2,'노트북 아직 있나요?','2024-05-23 08:46:11',1,1),
--- (2,1,'네, 아직 있습니다.','2024-05-23 08:50:11',1,1),
--- (3,1,'자켓 새건가요?','2024-05-23 09:46:12',1,2),
--- (4,2,'네, 거의 새겁니다.','2024-05-23 10:46:11',0,2),
--- (5,3,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,3),
--- (6,1,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,4);
--- /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
--- UNLOCK TABLES;
+LOCK TABLES `messages` WRITE;
+/*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+INSERT INTO `messages` VALUES 
+(1,2,'노트북 아직 있나요?','2024-05-23 08:46:11',1,1),
+(2,1,'네, 아직 있습니다.','2024-05-23 08:50:11',1,1),
+(3,1,'자켓 새건가요?','2024-05-23 09:46:12',1,2),
+(4,2,'네, 거의 새겁니다.','2024-05-23 10:46:11',0,2),
+(5,3,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,3),
+(6,1,'라켓 할인 가능한가요?','2024-05-23 08:46:11',1,4);
+/*!40000 ALTER TABLE `messages` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Dumping data for table `my_village`
@@ -128,7 +128,11 @@ UNLOCK TABLES;
 
 LOCK TABLES `post` WRITE;
 /*!40000 ALTER TABLE `post` DISABLE KEYS */;
-INSERT INTO `post` VALUES (1,'노트북 판매합니다',1,'거래대기',500000,2,1,37.5665,126.978,'광화문 근처','좋은 상태의 노트북입니다.','2024-05-23 08:46:11',1);
+INSERT INTO `post` VALUES 
+(1,'노트북 판매합니다',1,'거래대기',500000,1,1,37.5665,126.978,'광화문 근처','좋은 상태의 노트북입니다.','2024-05-23 08:46:11',1),
+(2,'노트북 판매합니다',1,'거래대기',500000,2,1,37.5665,126.978,'광화문 근처','좋은 상태의 노트북입니다.','2024-05-23 08:46:11',1),
+(3,'노트북 판매합니다',1,'거래대기',500000,1,1,37.5665,126.978,'광화문 근처','좋은 상태의 노트북입니다.','2024-05-23 08:46:11',1),
+(4,'노트북 판매합니다',1,'거래대기',500000,2,1,37.5665,126.978,'광화문 근처','좋은 상태의 노트북입니다.','2024-05-23 08:46:11',1);
 /*!40000 ALTER TABLE `post` ENABLE KEYS */;
 UNLOCK TABLES;
 
