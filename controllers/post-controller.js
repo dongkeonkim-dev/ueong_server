@@ -4,6 +4,7 @@ const PhotoRepository = require('../repositories/photo-repository');
 const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
 const { Enum, Array, Natural } = require('../utils/validation/custom-zod-types');
 const { Post, User, Search } = require('../utils/validation/schemas');
+const { partialExcept } = require('../utils/validation/utils');
 
 class PostsController {
   static async searchPosts(req, res) {

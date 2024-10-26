@@ -78,6 +78,8 @@ class PostRepository {
   }
 
   static async updatePost(input) {
+    input.writer_id = User.user_id(input.writer_username);
+    delete input.writer_username;
     const { post_id, ...updateFields } = input;
     const query = db(Post.table).where(Post.post_id, post_id).update(updateFields);
     return validUpdate(await query);
