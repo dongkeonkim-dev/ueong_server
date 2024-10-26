@@ -28,26 +28,27 @@ const SearchTerm = String_.max(45).refine((val) => val.length > 0, {
 
 // GetResult 스키마
 const GetResult = Rows.refine((arr) => Rows.safeParse(arr).success, {
-    message: "SELECT 쿼리 결과는 배열이어야 합니다."
-  });
+  message: "SELECT 쿼리 결과는 배열이어야 합니다."
+});
 
 const GetResultExist = RowExist.refine((arr) => RowExist.safeParse(arr).success, {
-    message: "데이터가 없습니다."
-  });
+  message: "데이터가 없습니다."
+});
 
 // UpdateResult 스키마
 const UpdateResult = Natural_.refine((val) => Integer_.safeParse(val).success, {
-    message: "영향받은 행이 없습니다."
-  })
+  message: "영향받은 행이 없습니다."
+})
 
 // CreateResult 스키마
 const CreateResult = Array_(Natural_).refine((val) => Array_(Natural_).safeParse(val).success, {
-    message: "생성된 행이 없습니다."
-  });
+  message: "생성된 행이 없습니다."
+});
 
+// DeleteResult 스키마
 const DeleteResult = Natural_.refine((val) => Integer_.safeParse(val).success, {
-    message: "삭제된 행이 없습니다."
-  });
+  message: "삭제된 행이 없습니다."
+});
 
 
 // GetResult 유틸리티 함수

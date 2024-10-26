@@ -1,6 +1,7 @@
 // Server/utils/models.js
 const Model = require('./model');
 const { log } = require('../log');
+
 const {
   Post: PostSchema,
   Favorite: FavoriteSchema,

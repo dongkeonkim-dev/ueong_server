@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { log } = require('./log');
 
 class FileManager {
   static async deleteFile(fileName) {

@@ -2,18 +2,16 @@
 const PostRepository = require('../repositories/post-repository');
 const PhotoRepository = require('../repositories/photo-repository');
 const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
-const { uploadFiles } = require('../middlewares/multer-middleware');
-const { Enum } = require('../utils/validation/custom-zod-types');
+const { Enum, Array, Natural } = require('../utils/validation/custom-zod-types');
 const { Post, User, Search } = require('../utils/validation/schemas');
-const { IMAGE_PATH } = require('../config/constants');
 
 class PostsController {
   static async searchPosts(req, res) {
     const params = User.pick({ username: true }).parse(req.params);
     /**
      * @typedef {Object} input
-     * @property {string} search_term
-     * @property {number} emd_id
+     * @property {string} //search_term
+    * @property {number} /emd_id
      * @property {'price' | 'favorite_count' | 'create_at'} sort_by
      */
     const input = Search.merge(Post.pick({ emd_id: true }))
@@ -52,43 +50,27 @@ class PostsController {
     res.json(post);
   }
 
-  // 게시물 생성 및 파일 업로드 처리 함수
-  static async createPost(req, res, next) {
-    if (req.is('multipart/form-data')) {
-      await PostsController.createPostWithFiles(req, res, next);
-    } else if (req.is('application/json')) {
-      await PostsController.createPostWithoutFiles(req, res);
-    } else {
-      throw new HttpError('Unsupported Content-Type', 400);
-    }
-  }
-
-  static async createPostWithFiles(req, res, next) {
-    // 멀터 미들웨어 사용
-    uploadFiles(req, res, async (err) => {
-      if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
-      const input = Post.omit({ post_id: true }).parse(req.body);
-      const createId = await PostRepository.createPost(input);
-      const photoRows = req.uploadedFiles.image_names.map((photo_name) => ({
-        photo_name: photo_name,
-        photo_directory: `${IMAGE_PATH}${photo_name}`,
-        post_id: createId
-      }));
-      await PhotoRepository.createPhotoRows(photoRows);
-      res.status(201).json({ createId });
-    });
-  }
-
-  // 게시물 생성 로직 분리
-  static async createPostWithoutFiles(req, res) {
-    const input = Post.omit({ post_id: true }).parse(req.body);
-    const createId = await PostRepository.createPost(input);
-    res.json({ createId });
+  static async createPost(req, res) {
+    const input = Post
+      .omit({ post_id: true })
+      .extend({ photo_ids: Array(Natural) })
+      .parse(req.body);
+    const { photo_ids, ...post } = input;
+    const post_id = await PostRepository.createPost(post);
+    const affectedRows = await PhotoRepository
+      .linkPhotos({ post_id, photo_ids });
+    res.json({ createId: post_id });
   }
 
   static async updatePost(req, res) {
-    const input = partialExcept(Post,{ post_id: true }).parse(req.body);
-    const affectedRows = await PostRepository.updatePost(input);
+    const postSchema = Post.extend({ photo_ids: Array(Natural) });
+    const input = partialExcept(postSchema, { post_id: true }).parse(req.body);
+    const { photo_ids, ...post } = input;
+    const affectedRows = await PostRepository.updatePost(post);
+    if (photo_ids) {
+      const affectedPhotoRows = await PhotoRepository
+        .linkPhotos({ post_id: input.post_id, photo_ids });
+    }
     res.json({ affectedRows })
   }
 
@@ -98,7 +80,7 @@ class PostsController {
     res.json({ affectedRows })
   }
 
-  static async chagePostActive(req, res) {
+  static async changePostActive(req, res) {
     const input = Post.pick({ post_id: true , is_active: true }).parse(req.body);
     const affectedRows = await PostRepository.updatePost(input);
     res.json({ affectedRows })

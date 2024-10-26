@@ -20,7 +20,6 @@ class PostRepository {
   }
 
   static async searchPosts(username, input) {
-
     const query =
       this.postQuery(username)
       // 검색 조건
@@ -37,7 +36,7 @@ class PostRepository {
         input.sort_by === 'price' ? 'asc' : 'desc'
       );
     return validGet(await query);
-  }s
+  }
 
   static async getFavoritePostsByUsername(username) {
     const query =

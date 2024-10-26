@@ -9,6 +9,6 @@ router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
 router.get('/post_id/:post_id/username/:username/', PostController.getPostById);
 router.post('/', PostController.createPost);
 router.patch('/change-status', PostController.changePostStatus)
-router.patch('/change-active', PostController.chagePostActive)
+router.patch('/change-active', PostController.changePostActive)
 
 module.exports = router;

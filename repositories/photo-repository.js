@@ -1,7 +1,8 @@
 // Server/Models/Posts.js
 const db = require('../utils/db/knex');
 const { Photo } = require('../utils/db/models');
-const { validCreate, validGet } = require('../utils/validation/custom-zod-types');
+const { validCreate, validGet, validUpdate } = require('../utils/validation/custom-zod-types');
+const { log } = require('../utils/log');
 
 class Photos {
   static async getPhotosByPostId(postId) {
@@ -19,13 +20,30 @@ class Photos {
     return validGet(await query).at(0);
   }
 
-  // 여러 사진을 한 번에 저장하는 함수 (최대 10개)
+  static async getPhotosByIds(photoIds) {
+    const query = db(Photo.table).select(Photo.all).whereIn(Photo.photo_id, photoIds);
+    return validGet(await query);
+  }
+
   static async createPhotoRows(photoRows) {
-    // Array().passthrough().min(1).max(10).parse(photoRows);
-    if (photoRows.length === 0 || photoRows.length > 10) {
-      throw new Error('You must provide between 1 and 10 photos.');
-    }
-    return validCreate(await db('photo').insert(photoRows));
+    const insertedIds = await db.transaction(async (trx) => {
+      const query = trx('photo').insert(photoRows);
+      const lastInsertId = validCreate(await query).at(0);
+      var insertedIds = [];
+      for (let i = 0; i < photoRows.length; i++) {
+        insertedIds.push(lastInsertId - photoRows.length + 1 + i);
+      }
+      return insertedIds;
+    }, { isolationLevel: 'serializable' });
+    return insertedIds;
+  }
+
+  static async linkPhotos(input) {
+    const { post_id, photo_ids } = input;
+    const query = db('photo')
+      .whereIn(Photo.photo_id, photo_ids)
+      .update({ post_id });
+    return validUpdate(await query);
   }
 }
 module.exports = Photos;

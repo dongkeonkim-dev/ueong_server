@@ -31,7 +31,7 @@ const Post = Schema({
   is_active: Binary.optional(), // default 1
   status: Enum(['거래대기', '거래완료']).optional(), // default '거래대기'
   // 입력 불가
-  create_at: Undefined, // default NOW()
+  create_at: Undefined, // default CURRENT_TIMESTAMP
   writer_id: Undefined, // writer_username을 변환해서 사용.
 }).extend({
   //입력 유효
@@ -69,9 +69,8 @@ const AddressSd = Schema({
 
 const Photo = Schema({
   photo_id: Natural,
-  post_id: Natural,
-  photo_name: String.max(255),
-  photo_directory: String.max(255),
+  post_id: Natural.optional(),
+  photo_path: String.max(255),
 });
 
 const PostSearchHistory = Schema({
