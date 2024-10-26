@@ -69,31 +69,31 @@ UNLOCK TABLES;
 -- Dumping data for table `chats`
 --
 
-LOCK TABLES `chats` WRITE;
-/*!40000 ALTER TABLE `chats` DISABLE KEYS */;
-INSERT INTO `chats` VALUES (4,2,1,6,1);
-/*!40000 ALTER TABLE `chats` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `chats` WRITE;
+-- /*!40000 ALTER TABLE `chats` DISABLE KEYS */;
+-- INSERT INTO `chats` VALUES (4,2,1,6,1);
+-- /*!40000 ALTER TABLE `chats` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 --
 -- Dumping data for table `favorite`
 --
 
-LOCK TABLES `favorite` WRITE;
-/*!40000 ALTER TABLE `favorite` DISABLE KEYS */;
-INSERT INTO `favorite` VALUES (1,1),(2,2),(3,3),(4,4),(5,5),(1,71),(1,76),(1,84),(1,89),(1,95),(1,100),(1,102);
-/*!40000 ALTER TABLE `favorite` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `favorite` WRITE;
+-- /*!40000 ALTER TABLE `favorite` DISABLE KEYS */;
+-- INSERT INTO `favorite` VALUES (1,1),(2,2),(3,3),(4,4),(5,5),(1,71),(1,76),(1,84),(1,89),(1,95),(1,100),(1,102);
+-- /*!40000 ALTER TABLE `favorite` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 --
 -- Dumping data for table `messages`
 --
 
-LOCK TABLES `messages` WRITE;
-/*!40000 ALTER TABLE `messages` DISABLE KEYS */;
-INSERT INTO `messages` VALUES (6,1,'안녕하세요','2024-10-17 08:47:08',0,4);
-/*!40000 ALTER TABLE `messages` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `messages` WRITE;
+-- /*!40000 ALTER TABLE `messages` DISABLE KEYS */;
+-- INSERT INTO `messages` VALUES (6,1,'안녕하세요','2024-10-17 08:47:08',0,4);
+-- /*!40000 ALTER TABLE `messages` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 --
 -- Dumping data for table `my_village`
@@ -179,7 +179,7 @@ UNLOCK TABLES;
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (1,'유저123','user1@example.com','','일반회원',1,'username1','/uploads/images/image-1729936776174-327199452.jpg'),(2,'유저2','user2@example.com','$2b$10$uRG1mSe6etLJkmUIaVnxRuhqcxfxjm8CjMSaAohQ4Lh8DXVPEh0BC','일반회원',1,'username2',NULL),(3,'관리자','admin@example.com','$2b$10$8r3finKIIZc2ELdh.8MaLeCsfUmtPPiNQktJm3AZJmyCAh/KGrRVy','관리자',1,'adminuser',NULL),(4,'유저3','user3@example.com','$2b$10$U65KIh347ham6RlUFMTda.4skxv3qj5SxCzNlUfVMS6MWE2gFyCAC','일반회원',1,'username3',NULL),(5,'유저4','user4@example.com','$2b$10$GfFz6.VN116r93xre.XanOsIvqiOA1V0dpkUwDofZ/oBLzEghm4Q.','일반회원',1,'username4',NULL);
+INSERT INTO `users` VALUES (1,'유저1','user1@example.com','','일반회원',1,'username1','/uploads/images/image-1729936776174-327199452.jpg'),(2,'유저2','user2@example.com','$2b$10$uRG1mSe6etLJkmUIaVnxRuhqcxfxjm8CjMSaAohQ4Lh8DXVPEh0BC','일반회원',1,'username2',NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;

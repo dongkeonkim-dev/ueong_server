@@ -1,4 +1,10 @@
-const db = require('./db/knex');
+const mysql = require('mysql2/promise'); // Promise 기반으로 사용
+const db = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: '11223344',
+    database: 'ueong'
+});
 
 // 메시지 큐 선언 (FIFO 방식)
 let messageQueue = [];
@@ -144,6 +150,51 @@ async function getSocketByUsername(username) {
     }
     return Promise.resolve(null); // 소켓 ID가 없으면 null 반환
 }
+
+async function getExistingChatRoomId(username, partnerUsername, postId) {
+    try {
+        // Step 1: Get user IDs for the usernames
+        const userQuery = `
+            SELECT user_id
+            FROM users
+            WHERE username IN (?, ?)
+        `;
+        const [userRows] = await db.query(userQuery, [username, partnerUsername]);
+
+        // Check if we got both user IDs
+        if (userRows.length < 2) {
+            console.log("One or both usernames not found.");
+            return null;
+        }
+
+        const userId1 = userRows[0].user_id; // user_id for username
+        const userId2 = userRows[1].user_id; // user_id for partnerUsername
+
+
+        // Step 2: Use the user IDs to find the chat_id
+        const chatQuery = `
+            SELECT chat_id
+            FROM chats
+            WHERE (seller_id = ? OR buyer_id = ?) AND post_id = ?
+            LIMIT 1
+        `;
+        const [chatRows] = await db.query(chatQuery, [userId1, userId1, postId]);
+        console.log("Chat Rows:", chatRows); // 추가
+
+        console.log("dsklfjlsaf",userId1, userId2, postId)
+
+
+        // Log and return the chat_id or null
+        console.log("Existing chat room ID:", chatRows.length > 0 ? chatRows[0].chat_id : null);
+        return chatRows.length > 0 ? chatRows[0].chat_id : null;
+
+    } catch (error) {
+        console.error('Error occurred while retrieving existing chat room:', error);
+        return null;
+    }
+}
+
+
 
 
 // 사용자와 소켓 ID를 저장하는 객체
@@ -341,48 +392,47 @@ const setupSocketEvents = (socket, io) => {
         });
     });
 
-    // 메시지 보내기 이벤트 처리
     socket.on('sendMessage', async (roomIdToSend, username, partnerUsername, content, postId) => {
-        // 메시지 유효성 검증
         if (!content || content.trim() === '') {
             return socket.emit('messageError', '메시지가 비어있습니다.');
         }
 
-        // 채팅방 ID가 유효한지 확인
         if (roomIdToSend == -1) {
             try {
-                const newChatRoomId = await createNewChatRoom(username, partnerUsername, postId);
-                if (!newChatRoomId) {
-                    return socket.emit('newChatRoomError', '채팅 방 생성에 실패했습니다.');
+
+                 // 기존 채팅방 ID가 있는지 확인
+                roomIdToSend = await getExistingChatRoomId(username, partnerUsername, postId);
+
+                // 채팅방이 없다면 새로운 채팅방 생성
+                if (!roomIdToSend) {
+                    roomIdToSend = await createNewChatRoom(username, partnerUsername, postId);
+                    if (!roomIdToSend) {
+                        return socket.emit('newChatRoomError', '채팅 방 생성에 실패했습니다.');
+                    }
                 }
-
-                roomIdToSend = newChatRoomId;
+    
                 socket.join(roomIdToSend);
-                console.log(`새로운 채팅방 ${roomIdToSend}에 사용자가 참가했습니다.`);
-
-                const partnerSocket = await getSocketByUsername(partnerUsername); // 상대방의 소켓을 가져오는 비동기 함수
+                console.log(`채팅방 ${roomIdToSend}에 사용자가 참가했습니다.`);
+    
+                const partnerSocket = await getSocketByUsername(partnerUsername);
                 if (partnerSocket) {
                     partnerSocket.join(roomIdToSend);
-                    console.log(`${partnerUsername}도 새로운 채팅방 ${roomIdToSend}에 참가했습니다.`);
+                    console.log(`${partnerUsername}도 채팅방 ${roomIdToSend}에 참가했습니다.`);
+                } else {
+                    console.log(`${partnerUsername}(상대방)님은 현재 앱 접속 중이 아닙니다.`);
                 }
-                else {
-                    console.log(`${partnerUsername}(상대방)님은 현재 앱 접속중이 아닙니다.`);
-                }
-                
             } catch (error) {
                 console.error("채팅 방 생성 중 오류 발생:", error);
                 return socket.emit('newChatRoomError', '채팅 방 생성 중 오류가 발생했습니다.');
             }
         }
-
-        // 메시지 큐에 메시지 추가
+    
         console.log(`전송된 메시지: ${roomIdToSend}, ${username}, ${content}`);
         addToQueue({ roomIdToSend, username, content }, io);
     });
+    
 
 
 };
 
 module.exports = setupSocketEvents;
-
-
