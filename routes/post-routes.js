@@ -8,6 +8,7 @@ router.get('/favorite/username/:username', PostController.getFavoritePostsByUser
 router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
 router.get('/post_id/:post_id/username/:username/', PostController.getPostById);
 router.post('/', PostController.createPost);
+router.patch('/', PostController.updatePost);
 router.patch('/change-status', PostController.changePostStatus)
 router.patch('/change-active', PostController.changePostActive)
 
