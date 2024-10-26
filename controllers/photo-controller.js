@@ -1,23 +1,35 @@
 // Server/controller/chat-controller.js
-const Photos = require('../models/photos');
+const PhotoRepository = require('../repositories/photo-repository');
+const { uploadFiles } = require('../middlewares/multer-middleware');
+const { IMAGE_PATH } = require('../config/constants');
+const { log } = require('../utils/log');
 
 class PhotoController {
-    static async getPhotosByPostId(req, res) {
-        const postId = req.params.postId;
+  static async getPhotosByPostId(req, res) {
+    const postId = req.params.postId;
+    const photos = await PhotoRepository.getPhotosByPostId(postId);
+    res.json(photos);
+  }
 
-        try {
-            const photos = await Photos.getPhotosByPostId(postId);
-            console.log(`Fetched ${photos.length} photos for postId: ${postId}`);
+  static async getPhotosByPostIds(req, res) {
+    const postIds = req.query.postIds;
+    const photos = await PhotoRepository.getPhotosByPostIds(postIds);
+    res.json(photos);
+  }
 
-            // 사진이 없을 경우에도 빈 배열 반환
-            res.json(photos);
-        } catch (err) {
-            console.error("Error searching Photo: ", err);
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    }
-
-
+  static async uploadPhotoFiles(req, res) {
+    uploadFiles(req, res, async (err) => {
+      if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
+      const photos = req.uploadedFiles.image_names.map((photo_name) => ({
+        photo_path: `${IMAGE_PATH}${photo_name}`,
+      }));
+      const createIds = await PhotoRepository.createPhotoRows(photos);
+      log(createIds)
+      const createdPhotos = await PhotoRepository.getPhotosByIds(createIds);
+      log(createdPhotos)
+      res.json({ createdPhotos });
+    });
+  }
 }
 
 module.exports = PhotoController;

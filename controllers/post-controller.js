@@ -1,99 +1,90 @@
 // Server/controller/post-controller.js
-const Posts = require('../models/posts');
-const Photos = require('../models/photos');
-const PostSearchHistory = require('../models/post-search-history');
-const { uploadFiles } = require('../middlewares/multer-middleware');
-const { check } = require('../utils/check')
-const logger = require('../utils/logger')
+const PostRepository = require('../repositories/post-repository');
+const PhotoRepository = require('../repositories/photo-repository');
+const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
+const { Enum, Array, Natural } = require('../utils/validation/custom-zod-types');
+const { Post, User, Search } = require('../utils/validation/schemas');
 
 class PostsController {
-    static async searchPosts(req, res) {
-        const username = req.params.username;
-        const { village, searchTerm, sortBy } = req.query;
-        
-        check(searchTerm.trim()).string.length.inRange.assert('검색어',0)
-
-        const histories = await PostSearchHistory.getHistoryByUsername(username);
-        const searchTermExists = histories.some(history => history.search_term === searchTerm);
-        if (searchTermExists) {
-            await PostSearchHistory.updateHistory(username, searchTerm);
-        } else {
-            await PostSearchHistory.addHistory(username, searchTerm);
-        }
-        const posts = await Posts.searchPosts(username, village, searchTerm, sortBy);
-        check(posts).array.length.log('포스트')
-        logger(`check(posts).array.length: ${check(posts).array.length}`)
-        res.json(posts);
+  static async searchPosts(req, res) {
+    const params = User.pick({ username: true }).parse(req.params);
+    /**
+     * @typedef {Object} input
+     * @property {string} //search_term
+    * @property {number} /emd_id
+     * @property {'price' | 'favorite_count' | 'create_at'} sort_by
+     */
+    const input = Search.merge(Post.pick({ emd_id: true }))
+      .extend({ sort_by: Enum(['price', 'favorite_count', 'create_at']).default('create_at') }).parse(req.query);
+    // 검색어가 있으면 검색어 기록 추가
+    if (input.search_term.length > 0) {
+      const histories = await PostSearchHistoryRepository.getHistoryByUsername(params.username);
+      const searchTermExists = histories.some(history => history.search_term === input.search_term);
+      // 검색어가 있으면 기록 업데이트, 없으면 기록 추가
+      if (searchTermExists) {
+        await PostSearchHistoryRepository.updateHistory(params.username, input.search_term);
+      } else {
+        await PostSearchHistoryRepository.addHistory(params.username, input.search_term);
+      }
     }
+    // 검색 결과 조회
+    const posts = await PostRepository.searchPosts(params.username, input);
+    res.json(posts);
+  }
 
-    static async getFavoritePostsByUsername(req, res) {
-        const username = req.params.username;
-        const posts = await Posts.getFavoritePostsByUsername(username);
-        check(posts).array.length.log('좋아요한 포스트')
-        res.json(posts);
-    }
+  static async getFavoritePostsByUsername(req, res) {
+    const params = User.pick({ username: true }).parse(req.params);
+    const posts = await PostRepository.getFavoritePostsByUsername(params.username);
+    res.json(posts);
+  }
 
-    static async getMyPostsByUsername(req, res) {
-        const username = req.params.username;
-        const posts = await Posts.getMyPostsByUsername(username);
-        check(posts).array.length.log('내 포스트')
-        res.json(posts);
-    }
+  static async getMyPostsByUsername(req, res) {
+    const params = User.pick({ username: true }).parse(req.params);
+    const posts = await PostRepository.getMyPostsByUsername(params.username);
+    res.json(posts);
+  }
 
-    static async getPostById(req, res) {
-        const postId = req.params.postId;
-        const username = req.params.username;
-        const post = await Posts.getPostById(username, postId);
-        check(post).isValid.assert('postId')
-        res.json(post);
-    }
+  static async getPostById(req, res) {
+    const params = Post.pick({ post_id: true }).merge(User.pick({ username: true })).parse(req.params);
+    const post = await PostRepository.getPostById(params.username, params.post_id);
+    res.json(post);
+  }
 
-    // 게시물 생성 및 파일 업로드 처리 함수
-    static async uploadPost(req, res, next) {
-        if (req.is('multipart/form-data')) {
-            await PostsController.uploadPostByMPForm(req, res, next);
-        } else if (req.is('application/json')) {
-            await PostsController.createPost(req, res);
-        } else {
-            throw new HttpError('Unsupported Content-Type', 400);
-        }
-    }
+  static async createPost(req, res) {
+    const input = Post
+      .omit({ post_id: true })
+      .extend({ photo_ids: Array(Natural) })
+      .parse(req.body);
+    const { photo_ids, ...post } = input;
+    const post_id = await PostRepository.createPost(post);
+    const affectedRows = await PhotoRepository
+      .linkPhotos({ post_id, photo_ids });
+    res.json({ createId: post_id });
+  }
 
-    static async uploadPostByMPForm(req, res, next) {
-        //멀터 미들웨어 사용
-        uploadFiles(req, res, async (err) => {
-            if (err) return next(new HttpError('File upload failed', 500)); // 간단한 에러 처리
-            const postId = await PostsController.createPost(req, res);
-            const postPhotoDatas = req.uploadedFiles.images.map((image) => ({
-                photo_name: image,
-                photo_directory: `/uploads/images/${image}`,
-                post_id: postId
-            }));
-            await Photos.savePhotos(postPhotoDatas)
-            res.status(201).json({
-                message: 'Post uploaded successfully',
-                postId,
-                photos: postPhotoDatas
-            });
-        });
+  static async updatePost(req, res) {
+    const postSchema = Post.extend({ photo_ids: Array(Natural) });
+    const input = partialExcept(postSchema, { post_id: true }).parse(req.body);
+    const { photo_ids, ...post } = input;
+    const affectedRows = await PostRepository.updatePost(post);
+    if (photo_ids) {
+      const affectedPhotoRows = await PhotoRepository
+        .linkPhotos({ post_id: input.post_id, photo_ids });
     }
+    res.json({ affectedRows })
+  }
 
-    // 게시물 생성 로직 분리
-    static async createPost(req, res) {
-        const { title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text } = req.body;
-        const requiredFields = {title, categoryId, price, writerUsername, emdId, latitude, longitude, locationDetail, text}
-        check(requiredFields).areValid.assert()
-        const postId = await Posts.createPost({ ...requiredFields });
-        return postId;
-    }
+  static async changePostStatus(req, res) {
+    const input = Post.pick({ post_id: true, status: true }).parse(req.body);
+    const affectedRows = await PostRepository.updatePost(input);
+    res.json({ affectedRows })
+  }
 
-    static async changePostStatus(req, res) {
-        const { postId, status } = req.body;
-        const requiredFields = { postId, status }
-        check(requiredFields).areValid.assert()
-        result = await Posts.changePostStatus({ ...requiredFields });
-        res.json(result)
-    }
+  static async changePostActive(req, res) {
+    const input = Post.pick({ post_id: true , is_active: true }).parse(req.body);
+    const affectedRows = await PostRepository.updatePost(input);
+    res.json({ affectedRows })
+  }
 }
 
 module.exports = PostsController;

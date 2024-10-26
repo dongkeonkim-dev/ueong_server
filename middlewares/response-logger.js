@@ -1,25 +1,15 @@
-// responseLogger.js
+// middlewares/response-logger.js
 
-const ENABLE_LOGGING = process.env.ENABLE_LOGGING === 'true';
+const { logResponse } = require('../utils/log');
 
-// 응답 및 에러 로깅 미들웨어
 const responseLogger = (req, res, next) => {
-    const originalSend = res.send;
+    const ENABLE_RESPONSE_LOGGING =
+        process.env.ENABLE_LOGGING === 'true' &&
+        process.env.ENABLE_RESPONSE_LOGGING === 'true';
 
-    res.send = function (body) {
-        if (ENABLE_LOGGING) {
-            console.log(`[응답] ${res.statusCode} - ${new Date().toISOString()}`);
-            console.log('응답 내용:', body);
-        }
-        return originalSend.apply(this, arguments);
-    };
-
-    res.on('finish', () => {
-        if (res.statusCode >= 400 && ENABLE_LOGGING) {
-            console.error(`[오류] 상태 코드: ${res.statusCode} - ${req.method} ${req.url}`);
-        }
-    });
-
+    if (ENABLE_RESPONSE_LOGGING) {
+        logResponse(res, 'detailed'); // 기본 모드로 응답 로깅
+    }
     next();
 };
 

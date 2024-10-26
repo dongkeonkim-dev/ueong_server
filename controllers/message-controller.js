@@ -1,12 +1,12 @@
 // Server/controller/chat-controller.js
-const Message = require('../models/messages');
+const MessageRepository = require('../repositories/message-repository');
 
 class MessageController {
     static async getMessagesByChatter(req, res) {
         const username = req.params.username;
         const chatter = req.query.chatter;
         try {
-            const messages = await Message.getMessagesByChatter(username, chatter);
+            const messages = await MessageRepository.getMessagesByChatter(username, chatter);
             if (messages) {
                 console.log("Messages found: ", messages); // 응답 로그 추가
                 res.json(messages);

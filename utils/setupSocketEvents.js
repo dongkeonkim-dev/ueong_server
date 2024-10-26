@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('./db/knex');
 
 // 메시지 큐 선언 (FIFO 방식)
 let messageQueue = [];
@@ -64,7 +64,7 @@ async function processMessage({ roomIdToSend, username, content }, io) {
 
         // 새로 저장된 메시지를 가져오는 쿼리
         const fetchMessageQuery = `
-            SELECT 
+            SELECT
                 m.message_id AS messageId,
                 u.username AS username,
                 u.nickname AS userNickname,
@@ -106,27 +106,27 @@ async function createNewChatRoom(username, partnerUsername, postId) {
     try {
         // 사용자 ID를 찾기 위한 쿼리
         const findUserIdsQuery = `
-            SELECT user_id 
-            FROM users 
+            SELECT user_id
+            FROM users
             WHERE username IN (?, ?)
         `;
-        
+
         const [users] = await db.query(findUserIdsQuery, [username, partnerUsername]);
-        
+
         if (users.length < 2) {
             console.error("사용자를 찾을 수 없습니다.");
             return null; // 사용자 ID를 찾을 수 없을 경우 null 반환
         }
-        
+
         const buyerId = users[0].user_id; // 첫 번째 사용자의 ID (username)
         const sellerId = users[1].user_id; // 두 번째 사용자의 ID (partnerUsername)
 
         // 새로운 채팅 방을 생성하는 SQL 쿼리
         const insertChatQuery = `
-            INSERT INTO chats (seller_id, buyer_id, post_id) 
+            INSERT INTO chats (seller_id, buyer_id, post_id)
             VALUES (?, ?, ?)
         `;
-        
+
         const [result] = await db.query(insertChatQuery, [sellerId, buyerId, postId]);
         return result.insertId; // 생성된 채팅 방의 ID 반환
     } catch (error) {
@@ -206,9 +206,9 @@ const setupSocketEvents = (socket, io) => {
             // chatExists 쿼리 수행
             const chatExistsQuery = `
                 SELECT EXISTS(
-                    SELECT 1 
-                    FROM chats 
-                    WHERE (seller_id = ? OR buyer_id = ?) 
+                    SELECT 1
+                    FROM chats
+                    WHERE (seller_id = ? OR buyer_id = ?)
                     AND post_id = ?
                 ) AS chatExists;
             `;
@@ -229,7 +229,7 @@ const setupSocketEvents = (socket, io) => {
         try {
             // 채팅 정보를 가져오기 위한 SQL 쿼리
             const query = `
-            SELECT 
+            SELECT
             c.chat_id,
             u2.nickname AS partnerNickname,
             u2.username AS partnerUsername,
@@ -239,28 +239,28 @@ const setupSocketEvents = (socket, io) => {
             c.post_id AS relatedPostId,
             COUNT(m_unread.message_id) AS unreadMessages,
             u_last_sender.nickname AS lastSenderNickname  -- 마지막 메시지 보낸 유저의 닉네임 추가
-            FROM 
+            FROM
                 chats c
-            JOIN 
+            JOIN
                 users u1 ON c.seller_id = u1.user_id OR c.buyer_id = u1.user_id
-            JOIN 
+            JOIN
                 users u2 ON (c.seller_id = u2.user_id OR c.buyer_id = u2.user_id) AND u1.user_id <> u2.user_id
-            LEFT JOIN 
+            LEFT JOIN
                 messages m ON c.last_message_id = m.message_id
-            LEFT JOIN 
+            LEFT JOIN
                 messages m_unread ON c.chat_id = m_unread.chat_id AND m_unread.sender_id <> u1.user_id AND m_unread.is_read = 0
-            LEFT JOIN 
+            LEFT JOIN
                 users u_last_sender ON m.sender_id = u_last_sender.user_id  -- 마지막 메시지를 보낸 유저의 정보를 가져오기 위한 조인
-            WHERE 
+            WHERE
                 u1.username = ?  -- username을 바인딩 변수로 사용
-            GROUP BY 
+            GROUP BY
                 c.chat_id, u2.nickname, u2.username, u2.profile_photo_url, m.message_text, m.sent_time, c.post_id, u_last_sender.nickname;  -- 마지막 메시지 보낸 유저의 닉네임을 GROUP BY에 추가
             `;
 
             const [results] = await db.execute(query, [username]);
             console.log("채팅리스트 불러오기 쿼리 실행 완료!")
             //쿼리문 결과값 출력
-            console.log(`results: ${JSON.stringify(results, null, 2)}`); 
+            console.log(`results: ${JSON.stringify(results, null, 2)}`);
 
             // 클라이언트에 채팅 데이터를 전송
             socket.emit('chatListResponse', {
@@ -286,11 +286,11 @@ const setupSocketEvents = (socket, io) => {
     // 메시지 리스너 이벤트 수신
     socket.on('loadExistingMessages', async (chatId) => {
         console.log(`message불러오기: ${chatId}`);
-    
+
         try {
             // 메시지 정보를 가져오기 위한 SQL 쿼리
             const query = `
-                SELECT 
+                SELECT
                     m.message_id AS messageId,
                     u.username AS username,
                     u.nickname AS userNickname,
@@ -299,19 +299,19 @@ const setupSocketEvents = (socket, io) => {
                     m.sent_time AS sentTime,
                     m.is_read AS isRead,
                     m.chat_id AS chatId
-                FROM 
+                FROM
                     messages m
-                JOIN 
+                JOIN
                     users u ON m.sender_id = u.user_id
-                WHERE 
+                WHERE
                     m.chat_id = ?;
             `;
-    
+
             const [results] = await db.execute(query, [chatId]);
             console.log("채팅 메시지 불러오기 쿼리 실행 완료!");
             // 쿼리 결과값 출력
             console.log(`results: ${JSON.stringify(results, null, 2)}`);
-    
+
             // 클라이언트에 메시지 데이터를 전송
             socket.emit('loadExistingMessagesResponse', {
                 success: true,
@@ -341,14 +341,13 @@ const setupSocketEvents = (socket, io) => {
         });
     });
 
-
     // 메시지 보내기 이벤트 처리
     socket.on('sendMessage', async (roomIdToSend, username, partnerUsername, content, postId) => {
         // 메시지 유효성 검증
         if (!content || content.trim() === '') {
             return socket.emit('messageError', '메시지가 비어있습니다.');
         }
-    
+
         // 채팅방 ID가 유효한지 확인
         if (roomIdToSend == -1) {
             try {
@@ -375,7 +374,7 @@ const setupSocketEvents = (socket, io) => {
                 return socket.emit('newChatRoomError', '채팅 방 생성 중 오류가 발생했습니다.');
             }
         }
-    
+
         // 메시지 큐에 메시지 추가
         console.log(`전송된 메시지: ${roomIdToSend}, ${username}, ${content}`);
         addToQueue({ roomIdToSend, username, content }, io);

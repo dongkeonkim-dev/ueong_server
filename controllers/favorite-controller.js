@@ -1,27 +1,19 @@
 // Server/controller/user-controller.js
-const Favorite = require('../models/favorite');
+const FavoriteRepository = require('../repositories/favorite-repository');
+const { Favorite, needUsername } = require('../utils/validation/schemas');
 
 class FavoriteController {
-    static async addFavorite(req, res) {
-        const { postId, username } = req.body;
+  static async addFavorite(req, res) {
+    const input = needUsername(Favorite).parse(req.body);
+    await FavoriteRepository.insertFavorite(input);
+    res.status(201).json({ message: `addFavorite successfully`});
+  }
 
-        try {
-            await Favorite.insertFavorite(postId, username);
-            res.status(201).json({ message: `insertFavorite successfully`});
-        } catch (err) {
-            res.status(500).json({ message: err.message });
-        }
-    }
-
-    static async deleteFavorite(req, res) {
-        const { postId, username } = req.query;
-        try {
-            await Favorite.deleteFavorite(postId, username);
-            res.status(201).json({ message: `deleteFavorite successfully`});
-        } catch (err) {
-            res.status(500).json({ message: err.message });
-        }
-    }
+  static async deleteFavorite(req, res) {
+    const input = needUsername(Favorite).parse(req.query);
+    const affectedRows = await FavoriteRepository.deleteFavorite(input);
+    res.status(201).json({ affectedRows });
+  }
 }
 
 module.exports = FavoriteController;
