@@ -2,6 +2,7 @@
 const db = require('../utils/db/knex');
 const { validCreate, validUpdate, validGet, validGetExist } = require('../utils/validation/custom-zod-types');
 const { Post, Writer, Favorite, FavoriteCount, User } = require('../utils/db/models');
+const { log } = require('../utils/log');
 
 class PostRepository {
   // 게시물 기본 형식
@@ -78,12 +79,16 @@ class PostRepository {
   }
 
   static async updatePost(input) {
-    input.writer_id = User.user_id(input.writer_username);
-    delete input.writer_username;
+    if (input.writer_username) {
+      input.writer_id = User.user_id(input.writer_username);
+      delete input.writer_username;
+    }
     const { post_id, ...updateFields } = input;
     const query = db(Post.table).where(Post.post_id, post_id).update(updateFields);
-    return validUpdate(await query);
+    //복합 업데이트, validUpdate 사용 불가
+    return await query;
   }
+
 }
 
 module.exports = PostRepository;

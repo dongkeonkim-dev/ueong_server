@@ -43,7 +43,14 @@ class Photos {
     const query = db('photo')
       .whereIn(Photo.photo_id, photo_ids)
       .update({ post_id });
-    return validUpdate(await query);
+    //복합 업데이트, validUpdate 사용 불가
+    return await query;
+  }
+
+  static async unlinkAllPhotos(post_id) {
+    const query = db(Photo.table).where(Photo.post_id, post_id).update({ post_id: null });
+    //복합 업데이트, validUpdate 사용 불가
+    return await query;
   }
 }
 module.exports = Photos;

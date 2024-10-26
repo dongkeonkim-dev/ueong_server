@@ -58,8 +58,10 @@ class PostsController {
       .parse(req.body);
     const { photo_ids, ...post } = input;
     const post_id = await PostRepository.createPost(post);
-    const affectedRows = await PhotoRepository
-      .linkPhotos({ post_id, photo_ids });
+    if(photo_ids){
+      const affectedRows = await PhotoRepository
+        .linkPhotos({ post_id, photo_ids });
+    }
     res.json({ createId: post_id });
   }
 
@@ -69,6 +71,7 @@ class PostsController {
     const { photo_ids, ...post } = input;
     const affectedRows = await PostRepository.updatePost(post);
     if (photo_ids) {
+      await PhotoRepository.unlinkAllPhotos(input.post_id);
       const affectedPhotoRows = await PhotoRepository
         .linkPhotos({ post_id: input.post_id, photo_ids });
     }
