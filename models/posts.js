@@ -193,6 +193,10 @@ class Posts {
         }
     }
     
+    static async updatePost(postData) {
+        const {postId, ...updateData } = postData
+        result = await DBHelper.patch('post', updateData, { postId })
+    }
 }
 
 module.exports = Posts;

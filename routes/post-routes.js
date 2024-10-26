@@ -9,5 +9,6 @@ router.get('/favorite/username/:username', PostController.getFavoritePostsByUser
 router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
 router.get('/postId/:postId/username/:username/', PostController.getPostById);
 router.post('/', PostController.uploadPost);
+router.patch('/change-status', PostController.changePostStatus)
 
 module.exports = router;
