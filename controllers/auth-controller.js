@@ -8,9 +8,12 @@ const config = require('../config');
 class AuthController {
   static async signup(req, res) {
     const input = omitUserId(User).parse(req.body);
+    const password = input.password
     input.password = await AuthService.hashPassword(input.password);
     let user_id = Natural.parse(await AuthRepository.signup(input));
-    res.status(200).json({ isSuccess: true });
+    input.password = password;
+    const accessToken = await AuthService.generateToken(input);
+    res.status(200).json({ accessToken });
   }
 
   static async login(req, res) {
@@ -20,7 +23,7 @@ class AuthController {
   }
 
   static async validateToken(req, res) {
-    const payload = AuthService.verifyJwt(req.headers[config.accessTokenHeader]);
+    const user = AuthService.getUserFromToken(req.headers[config.accessTokenHeader]);
     res.status(200).json({ isValid: true });
   }
 }
