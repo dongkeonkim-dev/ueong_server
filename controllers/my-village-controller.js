@@ -4,7 +4,6 @@ const { MyVillage, omitUserId } = require('../utils/validation/schemas')
 const { log } = require('../utils/log')
 class MyVillageController {
   static async getMyVillageByUsername(req, res) {
-    const input = omitUserId(MyVillage).parse(req.query);
     const rows = await MyVillageRepository.getMyVillageByUsername(req.user.username);
     res.json(rows);
   }
