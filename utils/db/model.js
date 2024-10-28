@@ -35,6 +35,7 @@ class Model {
     const property = Object.getOwnPropertyDescriptor(prototype, columnName);
     if (property) {
       delete prototype[columnName];
+      delete prototype[`${columnName}As`];
     }
   }
 
@@ -46,6 +47,16 @@ class Model {
         if (expression == null){
           return `${this.name}.${columnName}`;
         }
+        if (typeof expression == 'string'){
+          return db.raw(`${expression}`);
+        }
+        return expression;
+      },
+      enumerable: true,
+      configurable: true,
+    });
+    Object.defineProperty(this.constructor.prototype, `${columnName}As`, {
+      get () {
         if (typeof expression == 'string'){
           return db.raw(`${expression} AS ${columnName}`);
         }

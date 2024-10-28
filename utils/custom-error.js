@@ -44,8 +44,8 @@ class DuplicateError extends HttpError {
 }
 
 class UnauthorizedError extends HttpError {
-  constructor(errors, statusCode = 401) {
-    super("권한이 없습니다.", statusCode);
+  constructor(errors, message = "권한이 없습니다.", statusCode = 401) {
+    super(message, statusCode);
     this.errors = errors;
   }
 }
@@ -141,24 +141,24 @@ class UnknownError extends HttpError {
   }
 }
 
-module.exports = { 
-  HttpError, 
-  ValidationError, 
-  DataNotFoundError, 
-  AffectedRowsError, 
-  DuplicateError, 
-  UnauthorizedError, 
-  ForbiddenError, 
-  InternalServerError, 
-  NotImplementedError, 
-  BadGatewayError, 
-  ServiceUnavailableError, 
-  GatewayTimeoutError, 
-  HttpVersionNotSupportedError, 
-  VariantAlsoNegotiatesError, 
-  InsufficientStorageError, 
-  LoopDetectedError, 
-  NotExtendedError, 
-  NetworkAuthenticationRequiredError, 
+module.exports = {
+  HttpError,
+  ValidationError,
+  DataNotFoundError,
+  AffectedRowsError,
+  DuplicateError,
+  UnauthorizedError,
+  ForbiddenError,
+  InternalServerError,
+  NotImplementedError,
+  BadGatewayError,
+  ServiceUnavailableError,
+  GatewayTimeoutError,
+  HttpVersionNotSupportedError,
+  VariantAlsoNegotiatesError,
+  InsufficientStorageError,
+  LoopDetectedError,
+  NotExtendedError,
+  NetworkAuthenticationRequiredError,
   UnknownError
 };

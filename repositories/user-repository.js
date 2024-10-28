@@ -3,7 +3,7 @@ const db = require('../utils/db/knex');
 const { validGet, validUpdate } = require('../utils/validation/custom-zod-types')
 const { User } = require('../utils/db/models');
 
-class Users {
+class UserRepository {
   static async getUserByUsername(username) {
     const query = db(User.table).select(User.all).where(User.username, username);
     return validGet(await query).at(0);
@@ -16,4 +16,4 @@ class Users {
   }
 }
 
-module.exports = Users;
+module.exports = UserRepository;

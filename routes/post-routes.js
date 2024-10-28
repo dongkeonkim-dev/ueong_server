@@ -2,14 +2,15 @@
 const express = require('express');
 const router = express.Router();
 const PostController = require('../controllers/post-controller');
+const { authenticate } = require('../middlewares/auth-middleware');
 
-router.get('/search/username/:username', PostController.searchPosts);
-router.get('/favorite/username/:username', PostController.getFavoritePostsByUsername);
-router.get('/myPosts/username/:username', PostController.getMyPostsByUsername);
-router.get('/post_id/:post_id/username/:username/', PostController.getPostById);
-router.post('/', PostController.createPost);
-router.patch('/', PostController.updatePost);
-router.patch('/change-status', PostController.changePostStatus)
-router.patch('/change-active', PostController.changePostActive)
+router.get('/search', authenticate, PostController.searchPosts);
+router.get('/favorite', authenticate, PostController.getFavoritePostsByUsername);
+router.get('/myPosts', authenticate, PostController.getMyPostsByUsername);
+router.get('/post_id/:post_id', authenticate, PostController.getPostById);
+router.post('/', authenticate, PostController.createPost);
+router.patch('/', authenticate, PostController.updatePost);
+router.patch('/change-status', authenticate, PostController.changePostStatus)
+router.patch('/change-active', authenticate, PostController.changePostActive)
 
 module.exports = router;

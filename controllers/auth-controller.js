@@ -1,38 +1,29 @@
-// //controllers/AuthController.js
-// const jwt = require('jsonwebtoken');
-// const config = require('../config');
-// const AuthService = require('../services/auth-service');
+//controllers/AuthController.js
+const AuthService = require('../services/auth-service');
+const AuthRepository = require('../repositories/auth-repository');
+const { Natural } = require('../utils/validation/custom-zod-types');
+const { User, omitUserId } = require('../utils/validation/schemas');
+const config = require('../config');
 
-// class AuthController {
-//     static async login(req, res) {
-//         const { username, password } = req.body;
-//         try {
-//             const token = await AuthService.generateToken(username, password);
-//             res.status(200).json({ message: 'Login successful', token });
-//         } catch (err) {
-//             res.status(500).json({ message: err.message });
-//         }
-//     }
+class AuthController {
+  static async signup(req, res) {
+    const input = omitUserId(User).parse(req.body);
+    input.password = await AuthService.hashPassword(input.password);
+    let user_id = Natural.parse(await AuthRepository.signup(input));
+    res.status(200).json({ isSuccess: true });
+  }
 
-//     static validateToken(req, res) {
-//         const token = req.headers['authorization'];
-//         if (!token) {
-//             return res.status(401).json({ message: 'No token provided' });
-//         }
-//         jwt.verify(token, config.secretKey, (err, decoded) => {
-//             if (err) {
-//                 console.error("Token verification error: ", err);
-//                 return res.status(401).json({ message: 'Failed to authenticate token' });
-//             }
-//             console.log("Token verified successfully: ", decoded);
-//             res.status(200).json({ username: decoded.username, authority: decoded.authority });
-//         });
-//     }
+  static async login(req, res) {
+    const input = User.pick({username: true, password: true}).parse(req.body);
+    const accessToken = await AuthService.generateToken(input);
+    res.status(200).json({ accessToken });
+  }
 
-//     static logout(req, res) {
-//         UserService.logout(req, res);
-//     }
-// }
+  static async validateToken(req, res) {
+    const payload = AuthService.verifyJwt(req.headers[config.accessTokenHeader]);
+    res.status(200).json({ isValid: true });
+  }
+}
 
-// module.exports = AuthController;
+module.exports = AuthController;
 

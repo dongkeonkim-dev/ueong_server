@@ -148,26 +148,30 @@ ${chalk.gray('[내용]')} ${formattedBody} - ${chalk.gray(timestamp)}`;
             }
         }
     }
-    // 요청 객체인 경우
-    else if (data && data.method && data.originalUrl) {
-        const { method, originalUrl, params, query, body } = data;
+  // 요청 객체인 경우
+  else if (data && data.method && data.originalUrl) {
+    const { method, originalUrl, params, query, body, headers } = data;
 
-        let logMessage = `${chalk.blue('[요청]')} ${method} ${originalUrl}`;
+    let logMessage = `${chalk.blue('[요청]')} ${method} ${originalUrl}`;
 
-        if (params && Object.keys(params).length > 0) {
-            logMessage += `\n${chalk.blue('[파라미터]')} ${JSON.stringify(params, null, 2)}`;
-        }
-
-        if (query && Object.keys(query).length > 0) {
-            logMessage += `\n${chalk.blue('[쿼리]')} ${JSON.stringify(query, null, 2)}`;
-        }
-
-        if (body && Object.keys(body).length > 0) {
-            logMessage += `\n${chalk.blue('[본문]')} ${JSON.stringify(body, null, 2)}`;
-        }
-
-        console.log(`${logMessage} - ${chalk.gray(timestamp)}`);
+    if (params && Object.keys(params).length > 0) {
+        logMessage += `\n${chalk.blue('[파라미터]')} ${JSON.stringify(params, null, 2)}`;
     }
+
+    if (query && Object.keys(query).length > 0) {
+        logMessage += `\n${chalk.blue('[쿼리]')} ${JSON.stringify(query, null, 2)}`;
+    }
+
+    if (body && Object.keys(body).length > 0) {
+        logMessage += `\n${chalk.blue('[본문]')} ${JSON.stringify(body, null, 2)}`;
+    }
+
+    if (headers && headers.Authorization) {
+        logMessage += `\n${chalk.blue('[토큰]')} ${headers.Authorization}`;
+    }
+
+    console.log(`${logMessage} - ${chalk.gray(timestamp)}`);
+  }
     // 일반 메시지인 경우
     else if (typeof data === 'string') {
         console.log(`${chalk.blue('[정보]')} - ${chalk.gray(`${timestamp}: ${data}`)}`);

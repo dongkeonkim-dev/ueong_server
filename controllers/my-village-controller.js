@@ -1,16 +1,17 @@
 // Server/controller/my-village-controller.js
 const MyVillageRepository = require('../repositories/my-village-repository');
-const { MyVillage, User,needUsername } = require('../utils/validation/schemas')
+const { MyVillage, omitUserId } = require('../utils/validation/schemas')
 const { log } = require('../utils/log')
 class MyVillageController {
   static async getMyVillageByUsername(req, res) {
-    const input = User.pick({ username: true }).parse(req.params);
-    const rows = await MyVillageRepository.getMyVillageByUsername(input.username);
+    const input = omitUserId(MyVillage).parse(req.query);
+    const rows = await MyVillageRepository.getMyVillageByUsername(req.user.username);
     res.json(rows);
   }
 
   static async addMyVillage(req, res) {
-    const input = needUsername(MyVillage).parse(req.body);
+    const input = omitUserId(MyVillage).parse(req.body);
+    input.username = req.user.username;
     await MyVillageRepository.addMyVillage(input);
     res.status(201).json({ message: `addMyVillage successfully`});
   }

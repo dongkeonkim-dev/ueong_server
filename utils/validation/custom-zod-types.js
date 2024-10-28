@@ -16,6 +16,9 @@ const Binary_ = z.coerce.number().int().min(0).max(1) // 0 또는 1
 const Email_ = z.string().email().max(255) // 이메일
 const Enum_ = (values) => z.enum(values) // enum
 const Array_ = (type) => z.array(type) // 배열
+const Payload = (schema) => Schema({
+  username: String_.max(32),
+ }) // 페이로드
 
 // 패스스루 객체 정의
 const Row = Schema({}).passthrough()// export 안함

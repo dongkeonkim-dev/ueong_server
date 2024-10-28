@@ -9,9 +9,9 @@ class PostRepository {
   static postQuery(username) {
     return db(Post.table)
       .select(Post.all)
-      .select(Writer.writer_username)
-      .select(Favorite.is_favorite)
-      .select(FavoriteCount.favorite_count)
+      .select(Writer.writer_usernameAs)
+      .select(Favorite.is_favoriteAs)
+      .select(FavoriteCount.favorite_countAs)
       .leftJoin(Writer.table, Post.writer_id, Writer.user_id)
       .leftJoin(Favorite.table, function(){
         this.on(Post.post_id, Favorite.post_id)
@@ -20,9 +20,9 @@ class PostRepository {
       .leftJoin(FavoriteCount.table, Post.post_id, FavoriteCount.post_id);
   }
 
-  static async searchPosts(username, input) {
+  static async searchPosts(input) {
     const query =
-      this.postQuery(username)
+      this.postQuery(input.username)
       // 검색 조건
       .where(function () {
         this.where(Post.post_title, 'like', `%${input.search_term}%`)
@@ -62,10 +62,10 @@ class PostRepository {
     return validGet(await query);
   }
 
-  static async getPostById(username, post_id) {
+  static async getPostById(input) {
     const query =
-      this.postQuery(username)
-      .where(Post.post_id, post_id)
+      this.postQuery(input.username)
+      .where(Post.post_id, input.post_id)
       .andWhere(Post.is_active, 1)
       //거래대기, 거래완료 전부 조회
     return validGetExist(await query).at(0);

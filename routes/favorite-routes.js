@@ -4,7 +4,7 @@ const router = express.Router();
 const FavoriteController = require('../controllers/favorite-controller');
 const { authenticate } = require('../middlewares/auth-middleware');
 
-router.post('/', FavoriteController.addFavorite);
-router.delete('/',  FavoriteController.deleteFavorite);
+router.post('/', authenticate, FavoriteController.addFavorite);
+router.delete('/', authenticate, FavoriteController.deleteFavorite);
 
 module.exports = router;

@@ -25,6 +25,12 @@ class UserController {
       if (err) return next(new HttpError('File upload failed', 500));
       // 유저 정보 조회
       const input = partialExcept(User, { username: true }).parse(req.body);
+      delete input.is_active;
+      if (input.password == "") {
+        delete input.password;
+      } else {
+        input.password = await AuthService.hashPassword(input.password);
+      }
       const storedUser = await UserRepository.getUserByUsername(input.username);
       input.profile_photo_url = storedUser.profile_photo_url;
       // 이미지 업로드 시 기존 이미지 삭제
@@ -41,15 +47,33 @@ class UserController {
   static async updateUserWithoutPhoto(req, res) {
     const input = partialExcept(User, { username: true })
       .omit({ profile_photo_url: true }).parse(req.body);
+    delete input.is_active;
+    if (input.password == "") {
+      delete input.password;
+    } else {
+      input.password = await AuthService.hashPassword(input.password);
+    }
     const affectedRows = await UserRepository.updateUser(input);
     return res.json({ affectedRows });
   }
 
+  static async getUser(req, res) {
+    const user = await UserRepository.getUserByUsername(req.user.username);
+    return res.json(user);
+  }
+
   static async getUserByUsername(req, res) {
-    const bodyExist = req.body.username ? true : false;
-    const input = User.pick({ username: true }).parse(bodyExist ? req.body : req.params);
+    const input = User.pick({ username: true }).parse(req.params);
     const user = await UserRepository.getUserByUsername(input.username);
     return res.json(user);
+  }
+
+  static async deactivateUser(req, res) {
+    log(User.pick({ is_active: true }).required().keyof());
+    const input = User.pick({ is_active: true }).required().parse(req.body);
+    input.username = req.user.username;
+    const affectedRows = await UserRepository.updateUser(input);
+    res.status(200).json({ affectedRows });
   }
 }
 

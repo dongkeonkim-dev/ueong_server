@@ -8,7 +8,7 @@ class AddressRepository {
   static async getFullAddressById(emd_id) {
     const query = db(Emd.table)
       .select(Emd.emd_id)
-      .select(Address.fullAddress)
+      .select(Address.fullAddressAs)
       .leftJoin(Sgg.table, Emd.sgg_id, Sgg.sgg_id)
       .leftJoin(Sd.table, Sgg.sd_id, Sd.sd_id)
       .where(Emd.emd_id, emd_id);
@@ -18,7 +18,7 @@ class AddressRepository {
   static async searchAddress(searchTerm) {
     const query = db(Emd.table)
       .select(Emd.emd_id)
-      .select(Address.fullAddress)
+      .select(Address.fullAddressAs)
       .leftJoin(Sgg.table, Emd.sgg_id, Sgg.sgg_id)
       .leftJoin(Sd.table, Sgg.sd_id, Sd.sd_id)
       .where(Address.fullAddress, `LIKE`, `%${searchTerm}%`);
