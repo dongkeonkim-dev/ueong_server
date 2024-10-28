@@ -74,9 +74,10 @@ DROP TABLE IF EXISTS `ar_model`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ar_model` (
   `ar_model_id` int NOT NULL AUTO_INCREMENT,
-  `ar_model_name` varchar(45) NOT NULL,
+  -- `ar_model_name` varchar(45) NOT NULL,
   `ar_model_directory` varchar(45) NOT NULL,
   `post_id` int NOT NULL,
+  `upload_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ar_model_id`),
   KEY `fk_ar_model_post1_idx` (`post_id`),
   CONSTRAINT `fk_ar_model_post1` FOREIGN KEY (`post_id`) REFERENCES `post` (`post_id`)

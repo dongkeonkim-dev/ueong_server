@@ -49,11 +49,11 @@ UNLOCK TABLES;
 -- Dumping data for table `ar_model`
 --
 
-LOCK TABLES `ar_model` WRITE;
-/*!40000 ALTER TABLE `ar_model` DISABLE KEYS */;
-INSERT INTO `ar_model` VALUES (1,'노트북_모델','/models/노트북_모델',1),(2,'냉장고_모델','/models/냉장고_모델',2),(3,'자켓_모델','/models/자켓_모델',3),(4,'책_모델','/models/책_모델',4),(5,'라켓_모델','/models/라켓_모델',5);
-/*!40000 ALTER TABLE `ar_model` ENABLE KEYS */;
-UNLOCK TABLES;
+-- LOCK TABLES `ar_model` WRITE;
+-- /*!40000 ALTER TABLE `ar_model` DISABLE KEYS */;
+-- INSERT INTO `ar_model` VALUES (1,'노트북_모델','/models/노트북_모델',1),(2,'냉장고_모델','/models/냉장고_모델',2),(3,'자켓_모델','/models/자켓_모델',3),(4,'책_모델','/models/책_모델',4),(5,'라켓_모델','/models/라켓_모델',5);
+-- /*!40000 ALTER TABLE `ar_model` ENABLE KEYS */;
+-- UNLOCK TABLES;
 
 --
 -- Dumping data for table `category`

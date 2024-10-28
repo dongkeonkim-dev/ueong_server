@@ -16,6 +16,7 @@ class PhotoController {
     const photos = await PhotoRepository.getPhotosByPostIds(postIds);
     res.json(photos);
   }
+  
 
   static async uploadPhotoFiles(req, res) {
     uploadFiles(req, res, async (err) => {
