@@ -3,7 +3,7 @@ const db = require('../utils/db/knex');
 const { User } = require('../utils/db/models');
 const { validGet, validCreate, validUpdate, validDelete } = require('../utils/validation/custom-zod-types');
 const { PostSearchHistory } = require('../utils/db/models');
-
+const { log } = require('../utils/log');
 class PostSearchHistoryRepository {
   static async getHistoryByUsername(username) {
     const query = db(PostSearchHistory.table)
@@ -35,6 +35,7 @@ class PostSearchHistoryRepository {
       .where(PostSearchHistory.user_id, User.user_id(username))
       .andWhere(PostSearchHistory.search_term, searchTerm)
       .delete();
+    log(query.toSQL());
     return validDelete(await query);
   }
 }
