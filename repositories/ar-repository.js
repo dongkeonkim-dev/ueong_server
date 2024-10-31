@@ -7,9 +7,10 @@ const { log } = require('../utils/log');
 class AR {
 
     static async getModelByPostId(postId) {
-        const query = 
+        //const query = db.select('*').from('ar_models').where('post_id', postId);
+        //eturn query;
     }
 
-  
+
 }
 module.exports = AR;

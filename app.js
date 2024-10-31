@@ -44,7 +44,7 @@ app.use('/my-village', require('./routes/my-village-routes'));
 app.use('/address', require('./routes/address-routes'));
 app.use('/history',require('./routes/post-search-history-routes'));
 app.use('/favorite',require('./routes/favorite-routes'));
-app.use('/ar',require('./routes/ar-routes'))
+//app.use('/ar',require('./routes/ar-routes'))
 
 //DB 연결 확인
 (async () => {
