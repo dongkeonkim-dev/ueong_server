@@ -31,7 +31,7 @@ class Photos {
       const lastInsertId = validCreate(await query).at(0);
       var insertedIds = [];
       for (let i = 0; i < photoRows.length; i++) {
-        insertedIds.push(lastInsertId - photoRows.length + 1 + i);
+        insertedIds.push(lastInsertId + i);
       }
       return insertedIds;
     }, { isolationLevel: 'serializable' });
