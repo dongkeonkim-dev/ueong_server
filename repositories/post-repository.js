@@ -13,6 +13,7 @@ class PostRepository {
       .select(Favorite.is_favoriteAs)
       .select(FavoriteCount.favorite_countAs)
       .select(ArModel.ar_model_id)
+      .select(ArModel.ar_model_directory)
       .leftJoin(ArModel.table, Post.post_id, ArModel.post_id)
       .leftJoin(Writer.table, Post.writer_id, Writer.user_id)
       .leftJoin(Favorite.table, function(){

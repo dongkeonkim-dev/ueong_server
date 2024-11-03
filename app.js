@@ -32,8 +32,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(requestLogger);
 app.use(responseLogger);
 
-app.get('/uploads/model', (req, res) => {
-  const filePath = path.join(__dirname, 'public', 'model.usdz');
+app.get('/uploads/model/:filename', (req, res) => {
+  const filePath = path.join(__dirname, 'uploads/models', `${req.params.filename}`);
   res.setHeader('Content-Type', 'model/vnd.usdz+zip');
   res.setHeader('Content-Disposition', 'inline; filename="model.usdz"');
   res.setHeader('Access-Control-Allow-Origin', '*'); // 필요한 경우에만 추가
