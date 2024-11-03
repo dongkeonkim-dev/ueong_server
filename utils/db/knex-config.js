@@ -21,9 +21,9 @@ module.exports = {
   production: {
     client: 'mysql2',
     connection: {
-      host: 'localhost',
-      user: 'root',
-      password: '11223344',
+      host: 'database-1.cpa26eeu0yjb.ap-northeast-2.rds.amazonaws.com',
+      user: 'admin',
+      password: 'aaddmmiinn159!',
       database: 'ueong',
       port: 3306,
     },
