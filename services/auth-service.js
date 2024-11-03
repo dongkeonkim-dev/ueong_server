@@ -60,7 +60,19 @@ class AuthService {
         throw new UnauthorizedError(null, '탈퇴한 유저입니다.');
       }
       return user;
+
     } catch (err) {
+      // JWT 관련 오류 구분
+      if (err instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedError(err, '로그인 유효기간이 만료되었습니다.');
+      }
+      if (err instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedError(err, '토큰이 유효하지 않습니다.');
+      }
+      if (err instanceof jwt.NotBeforeError) {
+        throw new UnauthorizedError(err, '토큰이 아직 활성화되지 않았습니다.');
+      }
+      // 그 외 오류
       throw new UnauthorizedError(err, '토큰 인증에 실패했습니다.');
     }
   }

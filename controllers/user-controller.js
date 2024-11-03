@@ -6,6 +6,7 @@ const { deleteFile } = require('../utils/file-manager');
 const { IMAGE_PATH } = require('../config/constants');
 const { partialExcept } = require('../utils/validation/utils');
 const { log } = require('../utils/log');
+const AuthService = require('../services/auth-service');
 
 
 class UserController {

@@ -1,0 +1,3 @@
+pandas
+openpyxl
+xlsx2csv
