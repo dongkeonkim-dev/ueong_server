@@ -1,7 +1,7 @@
 // Server/Models/Posts.js
 const db = require('../utils/db/knex');
 const { validCreate, validUpdate, validGet, validGetExist } = require('../utils/validation/custom-zod-types');
-const { Post, Writer, Favorite, FavoriteCount, User } = require('../utils/db/models');
+const { Post, Writer, Favorite, FavoriteCount, User, ArModel } = require('../utils/db/models');
 const { log } = require('../utils/log');
 
 class PostRepository {
@@ -12,6 +12,8 @@ class PostRepository {
       .select(Writer.writer_usernameAs)
       .select(Favorite.is_favoriteAs)
       .select(FavoriteCount.favorite_countAs)
+      .select(ArModel.ar_model_id)
+      .leftJoin(ArModel.table, Post.post_id, ArModel.post_id)
       .leftJoin(Writer.table, Post.writer_id, Writer.user_id)
       .leftJoin(Favorite.table, function(){
         this.on(Post.post_id, Favorite.post_id)

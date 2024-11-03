@@ -72,7 +72,7 @@ class Schemas {
 
   ArModel = Schema({
     ar_model_id: Natural,
-    post_id: Natural,
+    post_id: Natural.optional(),
     ar_model_directory: String.max(255),
   });
 

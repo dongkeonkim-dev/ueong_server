@@ -57,7 +57,7 @@ class PostsController {
     const input = Post
       .omit({ post_id: true })
       .extend({ photo_ids: Array(Natural) })
-      .extend({ ar_model_id: Natural })
+      .extend({ ar_model_id: Natural.optional() })
       .parse(req.body);
     const { photo_ids, ar_model_id, ...post } = input;
     const post_id = await PostRepository.createPost(post);
