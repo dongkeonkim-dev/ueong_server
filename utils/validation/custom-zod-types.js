@@ -7,7 +7,11 @@ const Schema = (shape) => z.object(shape)
 
 // 기본 타입 래핑
 const Undefined = z.undefined() // undefined
-const Boolean_ = z.coerce.boolean() // 불리언
+const Boolean_ = z.preprocess((val) => {
+  if (val === 'true' || val === true) return true;
+  if (val === 'false' || val === false) return false;
+  return Boolean(val);
+}, z.boolean())
 const String_ = z.string()
 const Number_ = z.coerce.number() // 숫자
 const Double_ = Number_ // 실수

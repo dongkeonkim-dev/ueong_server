@@ -34,6 +34,8 @@ class PostRepository {
       .andWhere(Post.is_active, 1)
       .andWhere(Post.status, '거래대기')
       // AR 모델 필터링
+      log(`input.ar_only: ${input.ar_only}`)
+
     if (input.ar_only === true) {
       query.whereNotNull(ArModel.ar_model_id);
     }
