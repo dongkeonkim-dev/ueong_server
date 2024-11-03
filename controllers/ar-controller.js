@@ -18,7 +18,8 @@ class ArController {
         ar_model_directory: `${AR_PATH}${model_name}`,
       }));
       const [createId] = await ArRepository.createArModelRows(model);
-      res.json({ createId });
+      const createdModel = await ArRepository.getArModelById(createId);
+      res.json({ createdModel });
     });
   }
 }
