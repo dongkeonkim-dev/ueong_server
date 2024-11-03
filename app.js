@@ -32,6 +32,13 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use(requestLogger);
 app.use(responseLogger);
 
+app.get('/uploads/model', (req, res) => {
+  const filePath = path.join(__dirname, 'public', 'model.usdz');
+  res.setHeader('Content-Type', 'model/vnd.usdz+zip');
+  res.setHeader('Content-Disposition', 'inline; filename="model.usdz"');
+  res.setHeader('Access-Control-Allow-Origin', '*'); // 필요한 경우에만 추가
+  res.sendFile(filePath);
+});
 
 // 라우트 설정
 app.use('/auth', require('./routes/auth-routes'));
