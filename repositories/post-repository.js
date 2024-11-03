@@ -33,11 +33,16 @@ class PostRepository {
       .andWhere(Post.emd_id, input.emd_id)
       .andWhere(Post.is_active, 1)
       .andWhere(Post.status, '거래대기')
-      // 정렬
-      .orderBy(
-        input.sort_by,
-        input.sort_by === 'price' ? 'asc' : 'desc'
-      );
+      // AR 모델 필터링
+    if (input.ar_only === true) {
+      query.whereNotNull(ArModel.ar_model_id);
+    }
+
+    // 정렬
+    query.orderBy(
+      input.sort_by,
+      input.sort_by === 'price' ? 'asc' : 'desc'
+    );
     return validGet(await query);
   }
 

@@ -16,7 +16,10 @@ class PostsController {
      * @property {'price' | 'favorite_count' | 'create_at'} sort_by
      */
     const input = Search.merge(
-      Post.pick({ emd_id: true })).extend({sort_by: Enum(['price', 'favorite_count', 'create_at']).default('create_at')}).parse(req.query);
+      Post.pick({ emd_id: true }))
+      .extend({sort_by: Enum(['price', 'favorite_count', 'create_at']).default('create_at')})
+      .extend({ ar_only: Boolean.optional() })
+      .parse(req.query);
     input.username = req.user.username;
     // 검색어가 있으면 검색어 기록 추가
     if (input.search_term.length > 0) {
