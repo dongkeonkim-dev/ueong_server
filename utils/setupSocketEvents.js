@@ -1,16 +1,17 @@
 const mysql = require('mysql2/promise'); // Promise 기반으로 사용
+const config = require('../config');
 const db = mysql.createPool({
-   host: 'localhost',
-      user: 'root',
-      password: '11223344',
-      database: 'ueong',
+  host: config.db.host,
+  user: config.db.user,
+  password: config.db.password,
+  database: config.db.database,
 });
 
 // 메시지 큐 선언 (FIFO 방식)
 let messageQueue = [];
 
 // 메시지 큐 처리 중인지 여부 플래그
-let isProcessingQueue = false; 
+let isProcessingQueue = false;
 
 // 메시지 큐에 메시지 추가 및 처리 시작
 function addToQueue(messageData, io) {
@@ -410,10 +411,10 @@ const setupSocketEvents = (socket, io) => {
                         return socket.emit('newChatRoomError', '채팅 방 생성에 실패했습니다.');
                     }
                 }
-    
+
                 socket.join(roomIdToSend);
                 console.log(`채팅방 ${roomIdToSend}에 사용자가 참가했습니다.`);
-    
+
                 const partnerSocket = await getSocketByUsername(partnerUsername);
                 if (partnerSocket) {
                     partnerSocket.join(roomIdToSend);
@@ -426,11 +427,11 @@ const setupSocketEvents = (socket, io) => {
                 return socket.emit('newChatRoomError', '채팅 방 생성 중 오류가 발생했습니다.');
             }
         }
-    
+
         console.log(`전송된 메시지: ${roomIdToSend}, ${username}, ${content}`);
         addToQueue({ roomIdToSend, username, content }, io);
     });
-    
+
 
 
 };
