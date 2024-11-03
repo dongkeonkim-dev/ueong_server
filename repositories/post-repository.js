@@ -43,6 +43,7 @@ class PostRepository {
       input.sort_by,
       input.sort_by === 'price' ? 'asc' : 'desc'
     );
+    log(query.toSQL())
     return validGet(await query);
   }
 
