@@ -2,6 +2,7 @@
 const ArRepository = require('../repositories/ar-repository');
 const { uploadFiles } = require('../middlewares/multer-middleware');
 const { AR_PATH } = require('../config/constants');
+const { ArModel } = require('../utils/db/models');
 const { log } = require('../utils/log');
 
 class ArController {
