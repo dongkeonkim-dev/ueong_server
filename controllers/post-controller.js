@@ -56,12 +56,17 @@ class PostsController {
     const input = Post
       .omit({ post_id: true })
       .extend({ photo_ids: Array(Natural) })
+      .extend({ ar_model_id: Natural })
       .parse(req.body);
-    const { photo_ids, ...post } = input;
+    const { photo_ids, ar_model_id, ...post } = input;
     const post_id = await PostRepository.createPost(post);
     if(photo_ids){
       const affectedRows = await PhotoRepository
         .linkPhotos({ post_id, photo_ids });
+    }
+    if(ar_model_id){
+      const affectedRows = await ArRepository
+        .linkArModel({ post_id, ar_model_id });
     }
     res.json({ createId: post_id });
   }

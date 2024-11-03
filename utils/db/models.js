@@ -11,6 +11,7 @@ const {
   AddressSd: AddressSdSchema,
   MyVillage: MyVillageSchema,
   Photo: PhotoSchema,
+  ArModel: ArModelSchema,
   PostSearchHistory: PostSearchHistorySchema,
 } = require('../validation/schemas');
 const db = require('./knex');
@@ -85,6 +86,7 @@ module.exports = {
   Post: new Model('post', PostSchema),
   MyVillage: new Model('my_village', MyVillageSchema),
   Photo : new Model('photo', PhotoSchema),
+  ArModel : new Model('ar_model', ArModelSchema),
   PostSearchHistory : new Model('post_search_history', PostSearchHistorySchema),
   //별칭
   Emd,

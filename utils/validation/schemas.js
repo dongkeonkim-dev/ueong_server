@@ -70,6 +70,12 @@ class Schemas {
     photo_path: String.max(255),
   });
 
+  ArModel = Schema({
+    ar_model_id: Natural,
+    post_id: Natural,
+    ar_model_directory: String.max(255),
+  });
+
   PostSearchHistory = Schema({
     post_search_history_id: Natural,
     user_id: Natural,

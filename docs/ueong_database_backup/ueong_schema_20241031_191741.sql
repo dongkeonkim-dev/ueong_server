@@ -75,7 +75,7 @@ DROP TABLE IF EXISTS `ar_model`;
 CREATE TABLE `ar_model` (
   `ar_model_id` int NOT NULL AUTO_INCREMENT,
   `ar_model_directory` varchar(45) NOT NULL,
-  `post_id` int NOT NULL,
+  `post_id` int DEFAULT NULL,
   `upload_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`ar_model_id`),
   KEY `fk_ar_model_post1_idx` (`post_id`),
