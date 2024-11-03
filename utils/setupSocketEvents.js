@@ -1,16 +1,16 @@
 const mysql = require('mysql2/promise'); // Promise 기반으로 사용
 const db = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: '11223344',
-    database: 'ueong'
+   host: 'localhost',
+      user: 'root',
+      password: '11223344',
+      database: 'ueong',
 });
 
 // 메시지 큐 선언 (FIFO 방식)
 let messageQueue = [];
 
 // 메시지 큐 처리 중인지 여부 플래그
-let isProcessingQueue = false;
+let isProcessingQueue = false; 
 
 // 메시지 큐에 메시지 추가 및 처리 시작
 function addToQueue(messageData, io) {

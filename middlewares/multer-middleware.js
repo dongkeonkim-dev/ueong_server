@@ -7,7 +7,7 @@ const setDestination = (req, file, cb) => {
     if (file.fieldname === 'image') {
         cb(null, 'uploads/images'); // 이미지 저장 경로
     } else if (file.fieldname === 'model') {
-        cb(null, 'uploads/3d-models'); // 3D 모델 저장 경로
+        cb(null, 'uploads/models'); // 3D 모델 저장 경로
     } else {
         cb(new HttpError('Invalid file fieldname', 400), null); // HttpError로 변환
     }
@@ -41,12 +41,12 @@ const uploadFiles = (req, res, next) => {
 
         // 업로드된 파일 이름을 가져오기
         const uploadedImages = req.files['image'] || [];
-        const uploadedModel = req.files['model'] ? req.files['model'][0] : null;
+        const uploadedModel = req.files['model'] || [];
 
         // 파일 이름을 다음 미들웨어로 전달
         req.uploadedFiles = {
             image_names: uploadedImages.map(file => file.filename), // 배열로 변환
-            model_name: uploadedModel ? uploadedModel.filename : null
+            model_name: uploadedModel.map(file => file.filename) // 배열로 변환
         };
 
         next();

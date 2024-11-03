@@ -6,4 +6,5 @@ const { authenticate } = require('../middlewares/auth-middleware');
 
 router.get('/postId/:postId', authenticate, ArController.getModelByPostId);
 router.post('/', authenticate, ArController.uploadModelFile);
+
 module.exports = router;

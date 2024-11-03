@@ -8,7 +8,7 @@ LOCAL_PROJECT_PATH="/Users/mymac/Desktop/capstone/ueong_server"
 
 # EC2 접속 정보
 EC2_USER="ec2-user"
-EC2_DNS="ec2-43-200-8-246.ap-northeast-2.compute.amazonaws.com"
+EC2_DNS="ec2-13-124-48-216.ap-northeast-2.compute.amazonaws.com"
 EC2_DEST_PATH="/home/ec2-user"
 
 # rsync 명령어
