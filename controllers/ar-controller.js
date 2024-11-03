@@ -19,7 +19,7 @@ class ArController {
       }));
       const [createId] = await ArRepository.createArModelRows(model);
       const createdModel = await ArRepository.getArModelById(createId);
-      res.json({ createdModel });
+      res.json(createdModel);
     });
   }
 }
