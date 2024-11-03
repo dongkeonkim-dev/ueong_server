@@ -3,7 +3,7 @@ const PostRepository = require('../repositories/post-repository');
 const PhotoRepository = require('../repositories/photo-repository');
 const PostSearchHistoryRepository = require('../repositories/post-search-history-repository');
 const ArRepository = require('../repositories/ar-repository');
-const { Enum, Array, Natural } = require('../utils/validation/custom-zod-types');
+const { Enum, Array, Natural, Boolean } = require('../utils/validation/custom-zod-types');
 const { Post, Search } = require('../utils/validation/schemas');
 const { partialExcept } = require('../utils/validation/utils');
 

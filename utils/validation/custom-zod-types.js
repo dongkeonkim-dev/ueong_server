@@ -7,6 +7,7 @@ const Schema = (shape) => z.object(shape)
 
 // 기본 타입 래핑
 const Undefined = z.undefined() // undefined
+const Boolean_ = z.boolean() // 불리언
 const String_ = z.string()
 const Number_ = z.coerce.number() // 숫자
 const Double_ = Number_ // 실수
@@ -102,6 +103,7 @@ const validDelete = (data) => {
 module.exports = {
   Schema,
   Undefined,
+  Boolean: Boolean_,
   String: String_,
   Number: Number_,
   Double: Double_,
