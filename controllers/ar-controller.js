@@ -6,9 +6,9 @@ const { log } = require('../utils/log');
 
 class ArController {
   static async getModelByPostId(req, res) {
-    const postId = req.params.postId;
-    const models = await ArRepository.getArModelByPostId(postId);
-    res.json(models);
+    const input = ArModel.pick({ post_id: true }).parse(req.params);
+    const [model] = await ArRepository.getArModelByPostId(input.post_id);
+    res.json(model);
   }
 
   static async uploadModelFile(req, res) {
