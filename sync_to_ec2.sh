@@ -10,7 +10,7 @@ LOCAL_PROJECT_PATH="/Users/gimdong-geon/Documents/ueong_server"
 
 # EC2 접속 정보
 EC2_USER="ec2-user"
-EC2_DNS="ec2-13-209-66-104.ap-northeast-2.compute.amazonaws.com"
+EC2_DNS="43.202.83.112"
 EC2_DEST_PATH="/home/ec2-user"
 
 # rsync 명령어
