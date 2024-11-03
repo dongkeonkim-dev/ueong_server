@@ -434,6 +434,39 @@ const setupSocketEvents = (socket, io) => {
 
 
 
+
+
+    socket.on('allReadMessage', async (chatRoomId, username) => {
+        console.log(`allReadMessage 수신 데이터 - chatRoomId: ${chatRoomId}, username: ${username}`);
+        try {
+            // 채팅 정보를 가져오기 위한 SQL 쿼리
+            const query = `
+                UPDATE messages
+                SET is_read = 1
+                WHERE chat_room_id = ?
+                AND sender_id != (
+                    SELECT user_id FROM users WHERE username = ?
+                )
+            `;
+    
+            // 쿼리를 실행하여 is_read 값을 업데이트
+            await db.execute(query, [chatRoomId, username]);
+    
+            // 성공 메시지 클라이언트에 전송
+            socket.emit('allReadMessageResponse', 'success');
+            
+        } catch (error) {
+            console.error("에러 발생:", error);
+            
+            // 에러가 발생했을 경우 에러 메시지를 emit
+            socket.emit('allReadMessageResponseError', error.message);
+        }
+    });
+    
+    
+
+
+
 };
 
 module.exports = setupSocketEvents;
