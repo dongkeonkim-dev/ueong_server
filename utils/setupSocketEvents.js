@@ -443,7 +443,7 @@ const setupSocketEvents = (socket, io) => {
             const query = `
                 UPDATE messages
                 SET is_read = 1
-                WHERE chat_room_id = ?
+                WHERE chat_id = ?
                 AND sender_id != (
                     SELECT user_id FROM users WHERE username = ?
                 )
